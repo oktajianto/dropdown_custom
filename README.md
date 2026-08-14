@@ -1,5 +1,7 @@
 # dropdown_custom
 
+[![CI](https://github.com/oktajianto/dropdown_custom/actions/workflows/ci.yml/badge.svg)](https://github.com/oktajianto/dropdown_custom/actions/workflows/ci.yml)
+
 A customizable, **zero-dependency** dropdown for Flutter. Simple to set up, yet
 scales to real-world needs: search, grouping, per-item enable/disable, custom
 colors, and free positioning — **top, bottom, left, or right** with auto-flip.
@@ -62,6 +64,22 @@ CustomDropdown<City>(
 )
 ```
 
+### Multi-select
+
+```dart
+CustomDropdown<City>.multi(
+  items: cities,
+  selectedItems: picked,
+  itemLabel: (c) => c.name,
+  groupBy: (c) => c.province,
+  enableSearch: true,
+  onSelectionChanged: (list) => setState(() => picked = list),
+)
+```
+
+The menu shows a checkbox on each row and stays open while the user toggles
+items; `onSelectionChanged` fires with the full selection on every change.
+
 ### Positioning and custom colors
 
 ```dart
@@ -98,7 +116,7 @@ CustomDropdown<City>(
 ## Roadmap
 
 - [x] Single-select: search, grouping, positioning, custom colors, disable
-- [ ] Multi-select
+- [x] Multi-select
 - [ ] Async loading
 
 See `implementasi_plan.md` for the full plan.

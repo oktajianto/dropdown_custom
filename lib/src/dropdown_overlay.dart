@@ -21,7 +21,9 @@ class DropdownOverlay<T> extends StatefulWidget {
     required this.menuWidth,
     required this.decoration,
     required this.items,
+    required this.multiSelect,
     required this.value,
+    required this.initialSelected,
     required this.labelFor,
     required this.groupBy,
     required this.isItemEnabled,
@@ -31,6 +33,7 @@ class DropdownOverlay<T> extends StatefulWidget {
     required this.searchMatcher,
     required this.emptyText,
     required this.onSelected,
+    required this.onSelectionChanged,
     required this.onDismiss,
   });
 
@@ -55,8 +58,14 @@ class DropdownOverlay<T> extends StatefulWidget {
   /// Selectable items.
   final List<T> items;
 
-  /// Currently selected item.
+  /// Whether the menu is in multi-select (checkbox) mode.
+  final bool multiSelect;
+
+  /// Single-select: the currently selected item.
   final T? value;
+
+  /// Multi-select: the items selected when the menu opened.
+  final List<T> initialSelected;
 
   /// Resolves an item's display label.
   final ItemLabel<T> labelFor;
@@ -82,8 +91,11 @@ class DropdownOverlay<T> extends StatefulWidget {
   /// Text shown when nothing matches the search.
   final String emptyText;
 
-  /// Called when the user selects an enabled item.
+  /// Single-select: called when the user selects an enabled item.
   final ValueChanged<T> onSelected;
+
+  /// Multi-select: called with the full selection whenever it changes.
+  final ValueChanged<List<T>> onSelectionChanged;
 
   /// Called when the user taps outside the menu.
   final VoidCallback onDismiss;
@@ -108,14 +120,37 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   late final Animation<double> _anim;
   String _query = '';
 
+  /// Working copy of the multi-select selection, mutated as the user toggles
+  /// items while the menu stays open.
+  late final List<T> _selected;
+
   @override
   void initState() {
     super.initState();
+    _selected = List<T>.of(widget.initialSelected);
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 160),
     )..forward();
     _anim = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+  }
+
+  bool _isSelected(T item) =>
+      widget.multiSelect ? _selected.contains(item) : item == widget.value;
+
+  void _onItemTap(T item) {
+    if (!widget.multiSelect) {
+      widget.onSelected(item);
+      return;
+    }
+    setState(() {
+      if (_selected.contains(item)) {
+        _selected.remove(item);
+      } else {
+        _selected.add(item);
+      }
+    });
+    widget.onSelectionChanged(List<T>.of(_selected));
   }
 
   @override
@@ -342,7 +377,7 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     }
 
     final T item = row.item as T;
-    final bool isSelected = item == widget.value;
+    final bool isSelected = _isSelected(item);
     final bool isEnabled = widget.isItemEnabled?.call(item) ?? true;
 
     final Widget content = widget.itemBuilder != null
@@ -351,14 +386,16 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
 
     return _HoverableRow(
       enabled: isEnabled,
-      selected: isSelected,
+      // In multi-select a checkbox already signals state, so don't also tint
+      // the whole row background for selection.
+      selected: isSelected && !widget.multiSelect,
       highlightColor:
           deco.highlightColor ??
           theme.colorScheme.primary.withValues(alpha: 0.08),
       selectedColor:
           deco.selectedColor ??
           theme.colorScheme.primary.withValues(alpha: 0.12),
-      onTap: isEnabled ? () => widget.onSelected(item) : null,
+      onTap: isEnabled ? () => _onItemTap(item) : null,
       child: content,
     );
   }
@@ -382,6 +419,18 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
       padding: deco.itemPadding,
       child: Row(
         children: <Widget>[
+          if (widget.multiSelect) ...<Widget>[
+            Icon(
+              isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+              size: 20,
+              color: !isEnabled
+                  ? (deco.disabledColor ?? theme.disabledColor)
+                  : isSelected
+                  ? theme.colorScheme.primary
+                  : theme.hintColor,
+            ),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             child: Text(
               widget.labelFor(item),
@@ -389,7 +438,7 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
               style: style,
             ),
           ),
-          if (isSelected)
+          if (isSelected && !widget.multiSelect)
             Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
         ],
       ),

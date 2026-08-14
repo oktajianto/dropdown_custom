@@ -23,9 +23,9 @@ typedef DropdownItemBuilder<T> =
       bool isEnabled,
     );
 
-/// A highly customizable single-select dropdown.
+/// A highly customizable dropdown supporting single- and multi-select.
 ///
-/// The simplest usage only needs [items] and [onChanged]:
+/// The simplest single-select usage only needs [items] and [onChanged]:
 ///
 /// ```dart
 /// CustomDropdown<String>(
@@ -49,12 +49,24 @@ typedef DropdownItemBuilder<T> =
 ///   onChanged: (c) => setState(() => selected = c),
 /// )
 /// ```
+///
+/// Use [CustomDropdown.multi] for multi-select with checkboxes:
+///
+/// ```dart
+/// CustomDropdown<City>.multi(
+///   items: cities,
+///   selectedItems: picked,
+///   itemLabel: (c) => c.name,
+///   enableSearch: true,
+///   onSelectionChanged: (list) => setState(() => picked = list),
+/// )
+/// ```
 class CustomDropdown<T> extends StatefulWidget {
   /// Creates a single-select dropdown.
   const CustomDropdown({
     super.key,
     required this.items,
-    required this.onChanged,
+    required ValueChanged<T> this.onChanged,
     this.value,
     this.itemLabel,
     this.groupBy,
@@ -72,16 +84,64 @@ class CustomDropdown<T> extends StatefulWidget {
     this.closeOnSelect = true,
     this.emptyText = 'No results',
     this.leading,
-  });
+  }) : multiSelect = false,
+       selectedItems = null,
+       onSelectionChanged = null,
+       selectedItemsLabel = null;
+
+  /// Creates a multi-select dropdown that shows a checkbox on each row and
+  /// keeps the menu open while the user toggles items.
+  const CustomDropdown.multi({
+    super.key,
+    required this.items,
+    required ValueChanged<List<T>> this.onSelectionChanged,
+    List<T> this.selectedItems = const <Never>[],
+    this.itemLabel,
+    this.groupBy,
+    this.isItemEnabled,
+    this.itemBuilder,
+    this.enableSearch = false,
+    this.searchHint = 'Search',
+    this.searchMatcher,
+    this.hintText = 'Select',
+    this.selectedItemsLabel,
+    this.direction = DropdownDirection.auto,
+    this.decoration = const DropdownDecoration(),
+    this.enabled = true,
+    this.menuWidth,
+    this.gap = 4,
+    this.emptyText = 'No results',
+    this.leading,
+  }) : multiSelect = true,
+       value = null,
+       onChanged = null,
+       // A multi-select menu stays open while toggling.
+       closeOnSelect = false;
 
   /// The list of selectable items.
   final List<T> items;
 
-  /// Called with the newly selected item when the user picks one.
-  final ValueChanged<T> onChanged;
+  /// Whether this dropdown selects multiple items. Set by the constructor.
+  final bool multiSelect;
 
-  /// The currently selected item, or `null` if nothing is selected.
+  /// Single-select: called with the newly selected item. Non-null only when
+  /// [multiSelect] is false.
+  final ValueChanged<T>? onChanged;
+
+  /// Single-select: the currently selected item, or `null`.
   final T? value;
+
+  /// Multi-select: called with the full updated selection whenever the user
+  /// toggles an item. Non-null only when [multiSelect] is true.
+  final ValueChanged<List<T>>? onSelectionChanged;
+
+  /// Multi-select: the currently selected items. Non-null only when
+  /// [multiSelect] is true.
+  final List<T>? selectedItems;
+
+  /// Multi-select: builds the trigger label from the current selection. When
+  /// `null`, the selected items' labels are joined with ", ".
+  final String Function(List<T> selected)? selectedItemsLabel;
 
   /// Maps an item to its display label. Defaults to `item.toString()`.
   final ItemLabel<T>? itemLabel;
@@ -96,7 +156,7 @@ class CustomDropdown<T> extends StatefulWidget {
   final ItemEnabled<T>? isItemEnabled;
 
   /// Optional builder for fully custom item rows. When `null`, a default row
-  /// showing the label (and a check for the selected item) is used.
+  /// showing the label (and a check/checkbox) is used.
   final DropdownItemBuilder<T>? itemBuilder;
 
   /// Whether to show a search box at the top of the menu.
@@ -110,7 +170,7 @@ class CustomDropdown<T> extends StatefulWidget {
   /// "label contains query" match.
   final bool Function(T item, String query)? searchMatcher;
 
-  /// Text shown on the trigger when no item is selected.
+  /// Text shown on the trigger when nothing is selected.
   final String hintText;
 
   /// Where the menu opens relative to the trigger.
@@ -129,7 +189,8 @@ class CustomDropdown<T> extends StatefulWidget {
   /// Space in logical pixels between the trigger and the menu.
   final double gap;
 
-  /// Whether to close the menu after an item is selected.
+  /// Whether to close the menu after an item is selected. Always `false` for
+  /// multi-select.
   final bool closeOnSelect;
 
   /// Text shown when a search yields no matches.
@@ -189,7 +250,9 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
           menuWidth: widget.menuWidth,
           decoration: widget.decoration,
           items: widget.items,
+          multiSelect: widget.multiSelect,
           value: widget.value,
+          initialSelected: widget.selectedItems ?? const <Never>[],
           labelFor: _labelFor,
           groupBy: widget.groupBy,
           isItemEnabled: widget.isItemEnabled,
@@ -199,9 +262,10 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
           searchMatcher: widget.searchMatcher,
           emptyText: widget.emptyText,
           onSelected: (item) {
-            widget.onChanged(item);
+            widget.onChanged?.call(item);
             if (widget.closeOnSelect) _close();
           },
+          onSelectionChanged: (list) => widget.onSelectionChanged?.call(list),
           onDismiss: _close,
         );
       },
@@ -240,16 +304,27 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
     return DropdownDirection.top;
   }
 
+  /// The text shown on the trigger for the current selection.
+  ({String text, bool isHint}) _triggerLabel() {
+    if (widget.multiSelect) {
+      final List<T> selected = widget.selectedItems ?? const <Never>[];
+      if (selected.isEmpty) return (text: widget.hintText, isHint: true);
+      final String text = widget.selectedItemsLabel != null
+          ? widget.selectedItemsLabel!(selected)
+          : selected.map(_labelFor).join(', ');
+      return (text: text, isHint: false);
+    }
+    final T? value = widget.value;
+    return value != null
+        ? (text: _labelFor(value), isHint: false)
+        : (text: widget.hintText, isHint: true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final DropdownDecoration deco = widget.decoration;
-    final T? value = widget.value;
-
-    final String triggerText = value != null
-        ? _labelFor(value)
-        : widget.hintText;
-    final bool showingHint = value == null;
+    final ({String text, bool isHint}) label = _triggerLabel();
 
     return CompositedTransformTarget(
       link: _link,
@@ -273,13 +348,13 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
                 ],
                 Expanded(
                   child: Text(
-                    triggerText,
+                    label.text,
                     overflow: TextOverflow.ellipsis,
                     style: (deco.textStyle ?? theme.textTheme.bodyMedium)
                         ?.copyWith(
                           color: !widget.enabled
                               ? theme.disabledColor
-                              : showingHint
+                              : label.isHint
                               ? theme.hintColor
                               : null,
                         ),

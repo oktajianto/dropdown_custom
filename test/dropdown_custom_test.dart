@@ -138,4 +138,72 @@ void main() {
       expect(find.text('Apple'), findsNothing);
     });
   });
+
+  group('CustomDropdown multi-select', () {
+    testWidgets('shows the hint when nothing is selected', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango'],
+            hintText: 'Pick some',
+            onSelectionChanged: (_) {},
+          ),
+        ),
+      );
+
+      expect(find.text('Pick some'), findsOneWidget);
+    });
+
+    testWidgets('toggling items reports the full selection and stays open', (
+      tester,
+    ) async {
+      List<String> selection = <String>[];
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango', 'Orange'],
+            onSelectionChanged: (List<String> v) => selection = v,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Apple'));
+      await tester.pumpAndSettle();
+      expect(selection, <String>['Apple']);
+
+      // Menu is still open, so a second item can be toggled.
+      await tester.tap(find.text('Orange'));
+      await tester.pumpAndSettle();
+      expect(selection, <String>['Apple', 'Orange']);
+
+      // Toggling Apple again removes it.
+      await tester.tap(find.text('Apple'));
+      await tester.pumpAndSettle();
+      expect(selection, <String>['Orange']);
+    });
+
+    testWidgets('pre-selected items render as checked', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango'],
+            selectedItems: const <String>['Mango'],
+            onSelectionChanged: (_) {},
+          ),
+        ),
+      );
+
+      // Trigger shows the current selection.
+      expect(find.text('Mango'), findsOneWidget);
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.check_box), findsOneWidget);
+      expect(find.byIcon(Icons.check_box_outline_blank), findsOneWidget);
+    });
+  });
 }

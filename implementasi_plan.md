@@ -67,11 +67,13 @@ test/
 - [ ] Example app menampilkan fitur di atas
 - [ ] Unit/widget test dasar
 
-### Fase 2 — Multiselect
+### Fase 2 — Multiselect (SELESAI)
 
-- [ ] Named constructor `CustomDropdown<T>.multi(...)`
-- [ ] Chips / checkbox untuk item terpilih
-- [ ] `onSelectionChanged(List<T>)`, select-all/clear
+- [x] Named constructor `CustomDropdown<T>.multi(...)`
+- [x] Checkbox untuk item terpilih, menu tetap terbuka saat toggle
+- [x] `onSelectionChanged(List<T>)`
+- [x] `selectedItemsLabel` untuk kustom teks trigger
+- [ ] select-all/clear (menyusul bila diperlukan)
 
 ### Fase 3 — Async load
 

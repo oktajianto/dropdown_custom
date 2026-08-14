@@ -54,6 +54,7 @@ class _DemoPageState extends State<DemoPage> {
   City? _city;
   City? _groupedCity;
   City? _sideCity;
+  List<City> _multiCities = <City>[];
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +101,22 @@ class _DemoPageState extends State<DemoPage> {
                 onChanged: (City c) => setState(() => _groupedCity = c),
               ),
 
-              _section('4. Opens to the RIGHT'),
+              _section('4. Multi-select + search + grouping'),
+              CustomDropdown<City>.multi(
+                items: kCities,
+                selectedItems: _multiCities,
+                itemLabel: (City c) => c.name,
+                groupBy: (City c) => c.province,
+                isItemEnabled: (City c) => c.available,
+                enableSearch: true,
+                hintText: 'Pick cities',
+                selectedItemsLabel: (List<City> s) =>
+                    '${s.length} selected: ${s.map((City c) => c.name).join(', ')}',
+                onSelectionChanged: (List<City> list) =>
+                    setState(() => _multiCities = list),
+              ),
+
+              _section('5. Opens to the RIGHT'),
               CustomDropdown<City>(
                 items: kCities,
                 value: _sideCity,
@@ -112,7 +128,7 @@ class _DemoPageState extends State<DemoPage> {
                 onChanged: (City c) => setState(() => _sideCity = c),
               ),
 
-              _section('5. Disabled dropdown'),
+              _section('6. Disabled dropdown'),
               const CustomDropdown<String>(
                 items: <String>['X', 'Y'],
                 enabled: false,

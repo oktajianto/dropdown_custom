@@ -1,3 +1,11 @@
+## 0.2.0
+
+- Add multi-select via the `CustomDropdown.multi` constructor: checkboxes,
+  the menu stays open while toggling, `onSelectionChanged` reports the full
+  selection, and `selectedItemsLabel` customizes the trigger text.
+- Multi-select reuses all existing features (search, grouping, positioning,
+  per-item enable/disable, custom colors).
+
 ## 0.1.0
 
 Initial release — single-select foundation.
