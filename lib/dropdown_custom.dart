@@ -6,7 +6,13 @@
 library;
 
 export 'src/custom_dropdown.dart'
-    show CustomDropdown, ItemLabel, ItemGroup, ItemEnabled, DropdownItemBuilder;
+    show
+        CustomDropdown,
+        ItemLabel,
+        ItemGroup,
+        ItemEnabled,
+        DropdownItemBuilder,
+        DropdownErrorBuilder;
 export 'src/dropdown_decoration.dart' show DropdownDecoration;
 export 'src/dropdown_direction.dart' show DropdownDirection;
 export 'src/dropdown_loading.dart' show DropdownLoading;

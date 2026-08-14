@@ -24,6 +24,13 @@ typedef DropdownItemBuilder<T> =
       bool isEnabled,
     );
 
+/// Signature for building a custom error state for [CustomDropdown.async].
+///
+/// [error] is whatever the loader threw; call [retry] to run the loader again
+/// with the current query.
+typedef DropdownErrorBuilder =
+    Widget Function(BuildContext context, Object error, VoidCallback retry);
+
 /// A highly customizable dropdown supporting single- and multi-select.
 ///
 /// The simplest single-select usage only needs [items] and [onChanged]:
@@ -84,8 +91,10 @@ class CustomDropdown<T> extends StatefulWidget {
     this.gap = 4,
     this.closeOnSelect = true,
     this.emptyText = 'No results',
+    this.emptyBuilder,
     this.leading,
   }) : multiSelect = false,
+       errorBuilder = null,
        selectedItems = null,
        onSelectionChanged = null,
        selectedItemsLabel = null,
@@ -124,8 +133,10 @@ class CustomDropdown<T> extends StatefulWidget {
     this.menuWidth,
     this.gap = 4,
     this.emptyText = 'No results',
+    this.emptyBuilder,
     this.leading,
   }) : multiSelect = true,
+       errorBuilder = null,
        value = null,
        onChanged = null,
        async = false,
@@ -175,6 +186,8 @@ class CustomDropdown<T> extends StatefulWidget {
     this.gap = 4,
     this.closeOnSelect = true,
     this.emptyText = 'No results',
+    this.emptyBuilder,
+    this.errorBuilder,
     this.leading,
   }) : async = true,
        items = const <Never>[],
@@ -294,8 +307,18 @@ class CustomDropdown<T> extends StatefulWidget {
   /// multi-select.
   final bool closeOnSelect;
 
-  /// Text shown when a search yields no matches.
+  /// Text shown when a search yields no matches (used when [emptyBuilder] is
+  /// null).
   final String emptyText;
+
+  /// Optional builder for a fully custom empty state (no items / no matches).
+  /// When null, [emptyText] is shown.
+  final WidgetBuilder? emptyBuilder;
+
+  /// Async: optional builder for a fully custom error state. Receives the
+  /// thrown error and a retry callback. When null, a default message with a
+  /// retry button is shown.
+  final DropdownErrorBuilder? errorBuilder;
 
   /// Optional widget shown at the start of the trigger (e.g. an icon).
   final Widget? leading;
@@ -372,6 +395,8 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
           searchHint: widget.searchHint,
           searchMatcher: widget.searchMatcher,
           emptyText: widget.emptyText,
+          emptyBuilder: widget.emptyBuilder,
+          errorBuilder: widget.errorBuilder,
           onSelected: (item) {
             widget.onChanged?.call(item);
             if (widget.closeOnSelect) _close();

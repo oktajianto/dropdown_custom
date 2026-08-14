@@ -44,6 +44,8 @@ class DropdownOverlay<T> extends StatefulWidget {
     required this.searchHint,
     required this.searchMatcher,
     required this.emptyText,
+    required this.emptyBuilder,
+    required this.errorBuilder,
     required this.onSelected,
     required this.onSelectionChanged,
     required this.onDismiss,
@@ -129,6 +131,12 @@ class DropdownOverlay<T> extends StatefulWidget {
 
   /// Text shown when nothing matches the search.
   final String emptyText;
+
+  /// Optional builder for a custom empty state.
+  final WidgetBuilder? emptyBuilder;
+
+  /// Async: optional builder for a custom error state.
+  final DropdownErrorBuilder? errorBuilder;
 
   /// Single-select: called when the user selects an enabled item.
   final ValueChanged<T> onSelected;
@@ -487,6 +495,9 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   }
 
   Widget _buildError(ThemeData theme) {
+    if (widget.errorBuilder != null) {
+      return widget.errorBuilder!(context, _error!, () => _load(_query));
+    }
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -574,6 +585,7 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   }
 
   Widget _buildEmpty(ThemeData theme) {
+    if (widget.emptyBuilder != null) return widget.emptyBuilder!(context);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Text(

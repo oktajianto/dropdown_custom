@@ -382,6 +382,62 @@ void main() {
       await tester.pumpAndSettle();
     });
 
+    testWidgets('custom emptyBuilder is used when there are no results', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.async(
+            loader: (String _) async => <String>[],
+            emptyBuilder: (BuildContext context) => const Text('Nothing here'),
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nothing here'), findsOneWidget);
+    });
+
+    testWidgets('custom errorBuilder receives the error and a working retry', (
+      tester,
+    ) async {
+      int calls = 0;
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.async(
+            loader: (String _) async {
+              calls++;
+              if (calls == 1) throw Exception('kaboom');
+              return <String>['OK'];
+            },
+            errorBuilder:
+                (BuildContext context, Object error, VoidCallback retry) {
+                  return TextButton(
+                    onPressed: retry,
+                    child: Text('Custom error: $error'),
+                  );
+                },
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Custom error:'), findsOneWidget);
+      expect(find.textContaining('kaboom'), findsOneWidget);
+
+      await tester.tap(find.textContaining('Custom error:'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('OK'), findsOneWidget);
+      expect(calls, 2);
+    });
+
     testWidgets('debounces loader calls while typing', (tester) async {
       final List<String> queries = <String>[];
       await tester.pumpWidget(

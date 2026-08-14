@@ -136,6 +136,27 @@ CustomDropdown<User>.async(
 )
 ```
 
+The empty and error states are customizable too, so every async state
+(loading / empty / error) can use your own widgets:
+
+```dart
+CustomDropdown<User>.async(
+  loader: (query) => api.searchUsers(query),
+  emptyBuilder: (context) => const Center(child: Text('No users found')),
+  errorBuilder: (context, error, retry) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text('$error'),
+      TextButton(onPressed: retry, child: const Text('Try again')),
+    ],
+  ),
+  onChanged: (u) => ...,
+)
+```
+
+`emptyBuilder` also works on the single- and multi-select constructors (shown
+when a search yields no matches).
+
 ### Positioning and custom colors
 
 ```dart

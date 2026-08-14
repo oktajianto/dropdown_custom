@@ -9,6 +9,9 @@
   `DropdownLoading` type: `DropdownLoading.circular` (with a custom color),
   `DropdownLoading.shimmer` (animated skeleton with custom base/highlight
   colors, zero dependencies), or `DropdownLoading.custom` (your own widget).
+- Customizable empty and error states: `emptyBuilder` (all constructors) and
+  `errorBuilder` (async) let you render your own widgets. `errorBuilder`
+  receives the thrown error and a retry callback.
 
 ## 0.2.0
 

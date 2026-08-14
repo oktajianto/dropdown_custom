@@ -85,6 +85,8 @@ test/
 - [x] Loading indicator bisa dikustom via `DropdownLoading`:
       circular / shimmer skeleton / custom widget, plus warna bisa diatur
       (shimmer diimplement sendiri tanpa dependency)
+- [x] Empty & error state bisa dikustom (`emptyBuilder`, `errorBuilder`);
+      `errorBuilder` menerima error + callback retry
 - [ ] Async multi-select (menyusul bila diperlukan)
 
 ### Fase 4 — Polish & rilis pub.dev
