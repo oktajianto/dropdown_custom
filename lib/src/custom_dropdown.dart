@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'dropdown_decoration.dart';
 import 'dropdown_direction.dart';
+import 'dropdown_loading.dart';
 import 'dropdown_overlay.dart';
 
 /// Signature for turning an item of type [T] into its display label.
@@ -95,7 +96,8 @@ class CustomDropdown<T> extends StatefulWidget {
        loader = null,
        debounce = const Duration(milliseconds: 300),
        errorText = 'Failed to load',
-       retryText = 'Retry';
+       retryText = 'Retry',
+       loading = const DropdownLoading.circular();
 
   /// Creates a multi-select dropdown that shows a checkbox on each row and
   /// keeps the menu open while the user toggles items.
@@ -131,6 +133,7 @@ class CustomDropdown<T> extends StatefulWidget {
        debounce = const Duration(milliseconds: 300),
        errorText = 'Failed to load',
        retryText = 'Retry',
+       loading = const DropdownLoading.circular(),
        // A multi-select menu stays open while toggling.
        closeOnSelect = false;
 
@@ -164,6 +167,7 @@ class CustomDropdown<T> extends StatefulWidget {
     this.debounce = const Duration(milliseconds: 300),
     this.errorText = 'Failed to load',
     this.retryText = 'Retry',
+    this.loading = const DropdownLoading.circular(),
     this.direction = DropdownDirection.auto,
     this.decoration = const DropdownDecoration(),
     this.enabled = true,
@@ -202,6 +206,10 @@ class CustomDropdown<T> extends StatefulWidget {
 
   /// Async: label for the retry action shown in the error state.
   final String retryText;
+
+  /// Async: how the loading state is rendered (circular, shimmer skeleton, or
+  /// a fully custom widget). Defaults to a circular spinner.
+  final DropdownLoading loading;
 
   /// Whether this dropdown selects multiple items. Set by the constructor.
   final bool multiSelect;
@@ -353,6 +361,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
           debounce: widget.debounce,
           errorText: widget.errorText,
           retryText: widget.retryText,
+          loading: widget.loading,
           value: widget.value,
           initialSelected: widget.selectedItems ?? const <Never>[],
           labelFor: _labelFor,

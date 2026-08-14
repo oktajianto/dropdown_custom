@@ -82,6 +82,9 @@ test/
 - [x] `loader: Future<List<T>> Function(String query)`
 - [x] Loading indicator, debounce, empty/error state + retry
 - [x] Race-guard (request id) agar respons lama tak menimpa yang baru
+- [x] Loading indicator bisa dikustom via `DropdownLoading`:
+      circular / shimmer skeleton / custom widget, plus warna bisa diatur
+      (shimmer diimplement sendiri tanpa dependency)
 - [ ] Async multi-select (menyusul bila diperlukan)
 
 ### Fase 4 — Polish & rilis pub.dev

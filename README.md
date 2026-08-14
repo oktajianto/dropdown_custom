@@ -113,8 +113,28 @@ CustomDropdown<User>.async(
 ```
 
 `loader` is called with the debounced search query and owns filtering, so
-results are shown as-is. The menu handles the loading spinner, an error state
+results are shown as-is. The menu handles the loading state, an error state
 with a retry action, and the empty state for you.
+
+Choose how the loading state looks with `loading` — a circular spinner, an
+animated skeleton shimmer (both with customizable colors), or your own widget:
+
+```dart
+CustomDropdown<User>.async(
+  loader: (query) => api.searchUsers(query),
+  // 1) circular spinner with a custom color
+  loading: const DropdownLoading.circular(color: Colors.teal),
+  // 2) animated skeleton shimmer (zero dependencies)
+  // loading: DropdownLoading.shimmer(
+  //   baseColor: Colors.grey.shade300,
+  //   highlightColor: Colors.grey.shade100,
+  //   itemCount: 5,
+  // ),
+  // 3) fully custom loading widget
+  // loading: DropdownLoading.custom((context) => const MyLoader()),
+  onChanged: (u) => ...,
+)
+```
 
 ### Positioning and custom colors
 

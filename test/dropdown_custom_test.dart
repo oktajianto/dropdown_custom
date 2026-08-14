@@ -334,6 +334,54 @@ void main() {
       expect(calls, 2);
     });
 
+    testWidgets('shimmer loading style renders a skeleton, not a spinner', (
+      tester,
+    ) async {
+      final Completer<List<String>> completer = Completer<List<String>>();
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.async(
+            loader: (String _) => completer.future,
+            loading: const DropdownLoading.shimmer(itemCount: 4),
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pump();
+
+      expect(find.byKey(const Key('dropdownLoadingSkeleton')), findsOneWidget);
+
+      completer.complete(<String>['Done']);
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('custom loading builder is used', (tester) async {
+      final Completer<List<String>> completer = Completer<List<String>>();
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.async(
+            loader: (String _) => completer.future,
+            enableSearch: false,
+            loading: DropdownLoading.custom(
+              (BuildContext context) => const Text('LOADING…'),
+            ),
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pump();
+
+      expect(find.text('LOADING…'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+
+      completer.complete(<String>['Done']);
+      await tester.pumpAndSettle();
+    });
+
     testWidgets('debounces loader calls while typing', (tester) async {
       final List<String> queries = <String>[];
       await tester.pumpWidget(

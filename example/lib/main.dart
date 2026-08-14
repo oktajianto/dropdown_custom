@@ -125,13 +125,14 @@ class _DemoPageState extends State<DemoPage> {
                     setState(() => _multiCities = list),
               ),
 
-              _section('5. Async load (debounced search)'),
+              _section('5. Async load + shimmer skeleton loading'),
               CustomDropdown<City>.async(
                 loader: _searchCities,
                 value: _asyncCity,
                 itemLabel: (City c) => c.name,
                 searchHint: 'Type to search cities…',
                 hintText: 'Search remotely',
+                loading: const DropdownLoading.shimmer(itemCount: 5),
                 onChanged: (City c) => setState(() => _asyncCity = c),
               ),
 

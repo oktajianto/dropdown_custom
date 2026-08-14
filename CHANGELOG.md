@@ -5,6 +5,10 @@
   loading spinner, an error state plus retry, and the empty state. Results
   are used as-is (the loader owns filtering). Debounce and error/retry
   labels are configurable.
+- Customizable loading indicator via the `loading` parameter and the new
+  `DropdownLoading` type: `DropdownLoading.circular` (with a custom color),
+  `DropdownLoading.shimmer` (animated skeleton with custom base/highlight
+  colors, zero dependencies), or `DropdownLoading.custom` (your own widget).
 
 ## 0.2.0
 

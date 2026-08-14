@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'custom_dropdown.dart';
 import 'dropdown_decoration.dart';
 import 'dropdown_direction.dart';
+import 'dropdown_loading.dart';
 
 /// The floating menu shown while a [CustomDropdown] is open.
 ///
@@ -32,6 +33,7 @@ class DropdownOverlay<T> extends StatefulWidget {
     required this.debounce,
     required this.errorText,
     required this.retryText,
+    required this.loading,
     required this.value,
     required this.initialSelected,
     required this.labelFor,
@@ -94,6 +96,9 @@ class DropdownOverlay<T> extends StatefulWidget {
 
   /// Async: label for the retry action.
   final String retryText;
+
+  /// Async: how the loading state is rendered.
+  final DropdownLoading loading;
 
   /// Single-select: the currently selected item.
   final T? value;
@@ -433,7 +438,7 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     List<_Row<T>> rows,
   ) {
     if (widget.async) {
-      if (_loading && rows.isEmpty) return _buildLoading(theme);
+      if (_loading && rows.isEmpty) return _buildLoading(theme, deco);
       if (_error != null && rows.isEmpty) return _buildError(theme);
     }
     if (rows.isEmpty) return _buildEmpty(theme);
@@ -445,14 +450,37 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     );
   }
 
-  Widget _buildLoading(ThemeData theme) {
-    return const Padding(
-      padding: EdgeInsets.all(20),
+  Widget _buildLoading(ThemeData theme, DropdownDecoration deco) {
+    final DropdownLoading loading = widget.loading;
+
+    if (loading.builder != null) return loading.builder!(context);
+
+    if (loading.shimmer) {
+      final Color base =
+          loading.baseColor ??
+          theme.colorScheme.onSurface.withValues(alpha: 0.08);
+      final Color highlight =
+          loading.highlightColor ??
+          theme.colorScheme.onSurface.withValues(alpha: 0.18);
+      return _ShimmerSkeleton(
+        key: const Key('dropdownLoadingSkeleton'),
+        baseColor: base,
+        highlightColor: highlight,
+        itemCount: loading.itemCount,
+        itemPadding: deco.itemPadding,
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(20),
       child: Center(
         child: SizedBox(
           width: 22,
           height: 22,
-          child: CircularProgressIndicator(strokeWidth: 2.5),
+          child: CircularProgressIndicator(
+            strokeWidth: loading.strokeWidth,
+            color: loading.color ?? theme.colorScheme.primary,
+          ),
         ),
       ),
     );
@@ -687,6 +715,95 @@ class _HoverableRowState extends State<_HoverableRow> {
         onTap: widget.onTap,
         child: Container(color: background, child: widget.child),
       ),
+    );
+  }
+}
+
+/// Animated skeleton placeholder rows used for the shimmer loading style.
+///
+/// Paints [itemCount] rounded bars in [baseColor] and sweeps a [highlightColor]
+/// band across them, all without any third-party dependency.
+class _ShimmerSkeleton extends StatefulWidget {
+  const _ShimmerSkeleton({
+    super.key,
+    required this.baseColor,
+    required this.highlightColor,
+    required this.itemCount,
+    required this.itemPadding,
+  });
+
+  final Color baseColor;
+  final Color highlightColor;
+  final int itemCount;
+  final EdgeInsetsGeometry itemPadding;
+
+  @override
+  State<_ShimmerSkeleton> createState() => _ShimmerSkeletonState();
+}
+
+class _ShimmerSkeletonState extends State<_ShimmerSkeleton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1200),
+  )..repeat();
+
+  // Varied bar widths so the placeholder looks like real content.
+  static const List<double> _widthFactors = <double>[0.85, 0.6, 0.9, 0.5, 0.75];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget skeleton = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: List<Widget>.generate(widget.itemCount, (int i) {
+        return Padding(
+          padding: widget.itemPadding,
+          child: FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: _widthFactors[i % _widthFactors.length],
+            child: Container(
+              height: 14,
+              decoration: BoxDecoration(
+                color: widget.baseColor,
+                borderRadius: BorderRadius.circular(7),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+
+    return AnimatedBuilder(
+      animation: _controller,
+      child: skeleton,
+      builder: (BuildContext context, Widget? child) {
+        return ShaderMask(
+          blendMode: BlendMode.srcATop,
+          shaderCallback: (Rect bounds) {
+            // Center of the highlight band sweeps from off-screen left to
+            // off-screen right as the controller advances.
+            final double center = _controller.value * 2 - 0.5;
+            final double s0 = (center - 0.25).clamp(0.0, 1.0);
+            final double s1 = center.clamp(0.0, 1.0);
+            final double s2 = (center + 0.25).clamp(0.0, 1.0);
+            return LinearGradient(
+              colors: <Color>[
+                widget.baseColor,
+                widget.highlightColor,
+                widget.baseColor,
+              ],
+              stops: <double>[s0, s1, s2],
+            ).createShader(bounds);
+          },
+          child: child,
+        );
+      },
     );
   }
 }
