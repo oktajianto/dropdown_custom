@@ -1,0 +1,9 @@
+# Keep the published package lean: the example only needs its Dart source and
+# pubspec to demonstrate usage on pub.dev. Generated platform scaffolding is
+# not useful to package consumers.
+android/
+ios/
+linux/
+macos/
+windows/
+web/

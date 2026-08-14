@@ -1,0 +1,14 @@
+# Normalize all text files to LF in the repository so checkouts are identical
+# on every platform (prevents "files modified in git" failures in CI).
+* text=auto eol=lf
+
+# Treat binary assets as binary (never touch their bytes).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
