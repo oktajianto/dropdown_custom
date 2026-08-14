@@ -15,12 +15,13 @@ typedef ItemGroup<T> = String? Function(T item);
 typedef ItemEnabled<T> = bool Function(T item);
 
 /// Signature for building a fully custom row for an item.
-typedef DropdownItemBuilder<T> = Widget Function(
-  BuildContext context,
-  T item,
-  bool isSelected,
-  bool isEnabled,
-);
+typedef DropdownItemBuilder<T> =
+    Widget Function(
+      BuildContext context,
+      T item,
+      bool isSelected,
+      bool isEnabled,
+    );
 
 /// A highly customizable single-select dropdown.
 ///
@@ -146,8 +147,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
   OverlayEntry? _entry;
   bool _isOpen = false;
 
-  String _labelFor(T item) =>
-      widget.itemLabel?.call(item) ?? item.toString();
+  String _labelFor(T item) => widget.itemLabel?.call(item) ?? item.toString();
 
   bool get _interactive => widget.enabled && widget.items.isNotEmpty;
 
@@ -173,8 +173,11 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
     final Offset triggerTopLeft = box.localToGlobal(Offset.zero);
     final Size screen = MediaQuery.of(context).size;
 
-    final DropdownDirection resolved =
-        _resolveDirection(triggerTopLeft, triggerSize, screen);
+    final DropdownDirection resolved = _resolveDirection(
+      triggerTopLeft,
+      triggerSize,
+      screen,
+    );
 
     _entry = OverlayEntry(
       builder: (context) {
@@ -243,8 +246,9 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
     final DropdownDecoration deco = widget.decoration;
     final T? value = widget.value;
 
-    final String triggerText =
-        value != null ? _labelFor(value) : widget.hintText;
+    final String triggerText = value != null
+        ? _labelFor(value)
+        : widget.hintText;
     final bool showingHint = value == null;
 
     return CompositedTransformTarget(
@@ -258,8 +262,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
             padding: deco.itemPadding,
             decoration: BoxDecoration(
               borderRadius: deco.borderRadius,
-              border: deco.border ??
-                  Border.all(color: theme.dividerColor),
+              border: deco.border ?? Border.all(color: theme.dividerColor),
               color: deco.backgroundColor,
             ),
             child: Row(
@@ -274,12 +277,12 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
                     overflow: TextOverflow.ellipsis,
                     style: (deco.textStyle ?? theme.textTheme.bodyMedium)
                         ?.copyWith(
-                      color: !widget.enabled
-                          ? theme.disabledColor
-                          : showingHint
+                          color: !widget.enabled
+                              ? theme.disabledColor
+                              : showingHint
                               ? theme.hintColor
                               : null,
-                    ),
+                        ),
                   ),
                 ),
                 const SizedBox(width: 8),

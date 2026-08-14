@@ -94,12 +94,8 @@ class DropdownOverlay<T> extends StatefulWidget {
 
 /// A single laid-out row: either a group header or a selectable item.
 class _Row<T> {
-  const _Row.header(this.header)
-      : item = null,
-        isHeader = true;
-  const _Row.item(this.item)
-      : header = null,
-        isHeader = false;
+  const _Row.header(this.header) : item = null, isHeader = true;
+  const _Row.item(this.item) : header = null, isHeader = false;
 
   final bool isHeader;
   final String? header;
@@ -213,7 +209,8 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
 
   double get _menuWidth {
     if (widget.menuWidth != null) return widget.menuWidth!;
-    final bool vertical = widget.direction == DropdownDirection.top ||
+    final bool vertical =
+        widget.direction == DropdownDirection.top ||
         widget.direction == DropdownDirection.bottom ||
         widget.direction == DropdownDirection.auto;
     return vertical ? widget.triggerSize.width : 250;
@@ -311,9 +308,7 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
           prefixIcon: const Icon(Icons.search, size: 20),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(vertical: 8),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
     );
@@ -335,7 +330,8 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
         child: Text(
           row.header!,
-          style: deco.groupHeaderStyle ??
+          style:
+              deco.groupHeaderStyle ??
               theme.textTheme.labelSmall?.copyWith(
                 color: theme.hintColor,
                 fontWeight: FontWeight.w600,
@@ -356,9 +352,11 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     return _HoverableRow(
       enabled: isEnabled,
       selected: isSelected,
-      highlightColor: deco.highlightColor ??
+      highlightColor:
+          deco.highlightColor ??
           theme.colorScheme.primary.withValues(alpha: 0.08),
-      selectedColor: deco.selectedColor ??
+      selectedColor:
+          deco.selectedColor ??
           theme.colorScheme.primary.withValues(alpha: 0.12),
       onTap: isEnabled ? () => widget.onSelected(item) : null,
       child: content,
@@ -372,15 +370,13 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     bool isSelected,
     bool isEnabled,
   ) {
-    final TextStyle base = deco.textStyle ??
-        theme.textTheme.bodyMedium ??
-        const TextStyle();
+    final TextStyle base =
+        deco.textStyle ?? theme.textTheme.bodyMedium ?? const TextStyle();
     final TextStyle style = !isEnabled
         ? base.copyWith(color: deco.disabledColor ?? theme.disabledColor)
         : isSelected
-            ? (deco.selectedTextStyle ??
-                base.copyWith(fontWeight: FontWeight.w600))
-            : base;
+        ? (deco.selectedTextStyle ?? base.copyWith(fontWeight: FontWeight.w600))
+        : base;
 
     return Padding(
       padding: deco.itemPadding,
@@ -444,10 +440,7 @@ class _HoverableRowState extends State<_HoverableRow> {
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
-        child: Container(
-          color: background,
-          child: widget.child,
-        ),
+        child: Container(color: background, child: widget.child),
       ),
     );
   }

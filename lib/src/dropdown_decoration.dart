@@ -21,8 +21,7 @@ class DropdownDecoration {
     this.elevation = 4,
     this.maxHeight = 320,
     this.menuPadding = const EdgeInsets.symmetric(vertical: 4),
-    this.itemPadding =
-        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    this.itemPadding = const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
   });
 
   /// Background color of the open menu. Defaults to the theme surface color.

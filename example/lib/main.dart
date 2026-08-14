@@ -129,10 +129,10 @@ class _DemoPageState extends State<DemoPage> {
   static void _noop(String _) {}
 
   Widget _section(String title) => Padding(
-        padding: const EdgeInsets.only(top: 28, bottom: 8),
-        child: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-        ),
-      );
+    padding: const EdgeInsets.only(top: 28, bottom: 8),
+    child: Text(
+      title,
+      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+    ),
+  );
 }
