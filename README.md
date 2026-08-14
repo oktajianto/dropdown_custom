@@ -1,0 +1,108 @@
+# dropdown_custom
+
+A customizable, **zero-dependency** dropdown for Flutter. Simple to set up, yet
+scales to real-world needs: search, grouping, per-item enable/disable, custom
+colors, and free positioning — **top, bottom, left, or right** with auto-flip.
+
+## Why another dropdown?
+
+Flutter's built-in dropdown is limited, and most alternatives only open below
+the trigger. `dropdown_custom` focuses on:
+
+- **Free positioning** — open the menu on any side, with `auto` flipping when
+  it would run off-screen.
+- **Type-safe generics** — items are a plain `List<T>`; no wrapper class
+  required. `onChanged` returns your `T`, not `dynamic`.
+- **Simple by default** — the basic case is three lines; every extra feature is
+  an optional parameter.
+- **No dependencies** — only the Flutter SDK.
+
+## Getting started
+
+Add it to your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  dropdown_custom: ^0.1.0
+```
+
+## Usage
+
+### Simplest case
+
+```dart
+CustomDropdown<String>(
+  items: const ['Apple', 'Mango', 'Orange'],
+  onChanged: (value) => print(value),
+)
+```
+
+### Over your own model, with search and disabled items
+
+```dart
+CustomDropdown<City>(
+  items: cities,
+  value: selected,
+  itemLabel: (c) => c.name,
+  isItemEnabled: (c) => c.available,
+  enableSearch: true,
+  onChanged: (c) => setState(() => selected = c),
+)
+```
+
+### Grouped
+
+```dart
+CustomDropdown<City>(
+  items: cities,
+  itemLabel: (c) => c.name,
+  groupBy: (c) => c.province,
+  enableSearch: true,
+  onChanged: (c) => ...,
+)
+```
+
+### Positioning and custom colors
+
+```dart
+CustomDropdown<City>(
+  items: cities,
+  itemLabel: (c) => c.name,
+  direction: DropdownDirection.right,
+  decoration: const DropdownDecoration(
+    highlightColor: Color(0x1A00BCD4),
+    selectedColor: Color(0x3300BCD4),
+    maxHeight: 280,
+  ),
+  onChanged: (c) => ...,
+)
+```
+
+## Key parameters
+
+| Parameter | Description |
+|---|---|
+| `items` | The `List<T>` of choices. |
+| `onChanged` | Called with the selected `T`. |
+| `value` | The currently selected item. |
+| `itemLabel` | Maps an item to its label (defaults to `toString()`). |
+| `groupBy` | Groups items under headers. |
+| `isItemEnabled` | Disables specific items. |
+| `enableSearch` | Shows a search box. |
+| `searchMatcher` | Custom search predicate. |
+| `direction` | `top`, `bottom`, `left`, `right`, or `auto`. |
+| `decoration` | Colors, radius, elevation, sizing. |
+| `itemBuilder` | Fully custom item rows. |
+| `enabled` | Enables/disables the whole dropdown. |
+
+## Roadmap
+
+- [x] Single-select: search, grouping, positioning, custom colors, disable
+- [ ] Multi-select
+- [ ] Async loading
+
+See `implementasi_plan.md` for the full plan.
+
+## License
+
+MIT
