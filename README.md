@@ -6,6 +6,10 @@ A customizable, **zero-dependency** dropdown for Flutter. Simple to set up, yet
 scales to real-world needs: search, grouping, per-item enable/disable, custom
 colors, and free positioning — **top, bottom, left, or right** with auto-flip.
 
+**Works on every Flutter platform:** Android · iOS · Web · Windows · macOS ·
+Linux. It is a pure-Dart package (no native code, no platform channels, no
+third-party dependencies), so it runs anywhere Flutter runs.
+
 ## Why another dropdown?
 
 Flutter's built-in dropdown is limited, and most alternatives only open below
