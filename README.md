@@ -101,6 +101,21 @@ CustomDropdown<City>.multi(
 )
 ```
 
+### Async loading
+
+```dart
+CustomDropdown<User>.async(
+  loader: (query) => api.searchUsers(query), // Future<List<User>>
+  itemLabel: (u) => u.name,
+  debounce: const Duration(milliseconds: 300),
+  onChanged: (u) => setState(() => selected = u),
+)
+```
+
+`loader` is called with the debounced search query and owns filtering, so
+results are shown as-is. The menu handles the loading spinner, an error state
+with a retry action, and the empty state for you.
+
 ### Positioning and custom colors
 
 ```dart
@@ -138,8 +153,8 @@ CustomDropdown<City>(
 ## Roadmap
 
 - [x] Single-select: search, grouping, positioning, custom colors, disable
-- [x] Multi-select
-- [ ] Async loading
+- [x] Multi-select (with optional select-all/clear)
+- [x] Async loading
 
 See `implementasi_plan.md` for the full plan.
 

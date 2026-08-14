@@ -1,3 +1,11 @@
+## 0.3.0
+
+- Add async loading via the `CustomDropdown.async` constructor: a
+  `loader(query)` fetches items for the debounced search query, with a
+  loading spinner, an error state plus retry, and the empty state. Results
+  are used as-is (the loader owns filtering). Debounce and error/retry
+  labels are configurable.
+
 ## 0.2.0
 
 - Add multi-select via the `CustomDropdown.multi` constructor: checkboxes,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dropdown_custom/dropdown_custom.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -274,6 +276,95 @@ void main() {
 
       // Only the filtered items ("Mango", "Orange") are selected.
       expect(selection, <String>['Mango', 'Orange']);
+    });
+  });
+
+  group('CustomDropdown async', () {
+    testWidgets('shows a spinner then the loaded items', (tester) async {
+      final Completer<List<String>> completer = Completer<List<String>>();
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.async(
+            loader: (String _) => completer.future,
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pump(); // open + kick off the initial load
+
+      expect(find.byType(CircularProgressIndicator), findsWidgets);
+
+      completer.complete(<String>['Ada', 'Bob']);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.text('Ada'), findsOneWidget);
+      expect(find.text('Bob'), findsOneWidget);
+    });
+
+    testWidgets('shows an error state with retry that reloads', (tester) async {
+      int calls = 0;
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.async(
+            loader: (String _) async {
+              calls++;
+              if (calls == 1) throw Exception('boom');
+              return <String>['Recovered'];
+            },
+            errorText: 'Oops',
+            retryText: 'Try again',
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Oops'), findsOneWidget);
+      expect(find.text('Try again'), findsOneWidget);
+
+      await tester.tap(find.text('Try again'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Recovered'), findsOneWidget);
+      expect(calls, 2);
+    });
+
+    testWidgets('debounces loader calls while typing', (tester) async {
+      final List<String> queries = <String>[];
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.async(
+            debounce: const Duration(milliseconds: 300),
+            loader: (String q) async {
+              queries.add(q);
+              return <String>[q];
+            },
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle(); // initial load with empty query
+
+      // Three quick keystrokes within the debounce window.
+      await tester.enterText(find.byType(TextField), 'a');
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.enterText(find.byType(TextField), 'ab');
+      await tester.pump(const Duration(milliseconds: 100));
+      await tester.enterText(find.byType(TextField), 'abc');
+
+      // Fire the debounce timer, then let the load complete.
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      // Initial '' plus a single debounced 'abc' — not one call per keystroke.
+      expect(queries, <String>['', 'abc']);
     });
   });
 }

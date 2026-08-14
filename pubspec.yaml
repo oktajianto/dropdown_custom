@@ -2,7 +2,7 @@ name: dropdown_custom
 description: >-
   A customizable, zero-dependency dropdown with search, grouping, per-item
   enable/disable, custom colors, and free positioning (top/bottom/left/right).
-version: 0.2.0
+version: 0.3.0
 homepage: https://github.com/oktajianto/dropdown_custom
 repository: https://github.com/oktajianto/dropdown_custom
 issue_tracker: https://github.com/oktajianto/dropdown_custom/issues

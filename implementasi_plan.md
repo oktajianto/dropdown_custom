@@ -76,11 +76,13 @@ test/
 - [x] select-all/clear opsional (`showSelectAll`, default off; hormati filter
       search & lewati item disable; label bisa dikustom)
 
-### Fase 3 — Async load
+### Fase 3 — Async load (SELESAI)
 
-- [ ] Named constructor `CustomDropdown<T>.async(...)`
-- [ ] `loader: Future<List<T>> Function(String query)`
-- [ ] Loading indicator, debounce, empty/error state
+- [x] Named constructor `CustomDropdown<T>.async(...)`
+- [x] `loader: Future<List<T>> Function(String query)`
+- [x] Loading indicator, debounce, empty/error state + retry
+- [x] Race-guard (request id) agar respons lama tak menimpa yang baru
+- [ ] Async multi-select (menyusul bila diperlukan)
 
 ### Fase 4 — Polish & rilis pub.dev
 

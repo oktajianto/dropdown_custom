@@ -90,7 +90,12 @@ class CustomDropdown<T> extends StatefulWidget {
        selectedItemsLabel = null,
        showSelectAll = false,
        selectAllLabel = 'Select all',
-       clearAllLabel = 'Clear';
+       clearAllLabel = 'Clear',
+       async = false,
+       loader = null,
+       debounce = const Duration(milliseconds: 300),
+       errorText = 'Failed to load',
+       retryText = 'Retry';
 
   /// Creates a multi-select dropdown that shows a checkbox on each row and
   /// keeps the menu open while the user toggles items.
@@ -121,11 +126,82 @@ class CustomDropdown<T> extends StatefulWidget {
   }) : multiSelect = true,
        value = null,
        onChanged = null,
+       async = false,
+       loader = null,
+       debounce = const Duration(milliseconds: 300),
+       errorText = 'Failed to load',
+       retryText = 'Retry',
        // A multi-select menu stays open while toggling.
        closeOnSelect = false;
 
-  /// The list of selectable items.
+  /// Creates a single-select dropdown whose items are fetched asynchronously
+  /// by [loader], which is called with the current search query (debounced).
+  ///
+  /// ```dart
+  /// CustomDropdown<User>.async(
+  ///   loader: (query) => api.searchUsers(query),
+  ///   itemLabel: (u) => u.name,
+  ///   onChanged: (u) => setState(() => selected = u),
+  /// )
+  /// ```
+  ///
+  /// The menu shows a loading indicator while awaiting, an error state with a
+  /// retry action if [loader] throws, and [emptyText] when it returns no items.
+  /// Because [loader] is expected to filter by the query itself, results are
+  /// not filtered again on the client.
+  const CustomDropdown.async({
+    super.key,
+    required Future<List<T>> Function(String query) this.loader,
+    required ValueChanged<T> this.onChanged,
+    this.value,
+    this.itemLabel,
+    this.groupBy,
+    this.isItemEnabled,
+    this.itemBuilder,
+    this.enableSearch = true,
+    this.searchHint = 'Search',
+    this.hintText = 'Select',
+    this.debounce = const Duration(milliseconds: 300),
+    this.errorText = 'Failed to load',
+    this.retryText = 'Retry',
+    this.direction = DropdownDirection.auto,
+    this.decoration = const DropdownDecoration(),
+    this.enabled = true,
+    this.menuWidth,
+    this.gap = 4,
+    this.closeOnSelect = true,
+    this.emptyText = 'No results',
+    this.leading,
+  }) : async = true,
+       items = const <Never>[],
+       multiSelect = false,
+       searchMatcher = null,
+       selectedItems = null,
+       onSelectionChanged = null,
+       selectedItemsLabel = null,
+       showSelectAll = false,
+       selectAllLabel = 'Select all',
+       clearAllLabel = 'Clear';
+
+  /// The list of selectable items. Empty for [CustomDropdown.async], where
+  /// items come from [loader] instead.
   final List<T> items;
+
+  /// Whether items are loaded asynchronously via [loader].
+  final bool async;
+
+  /// Async: fetches items for the given (debounced) search query. Non-null
+  /// only for [CustomDropdown.async].
+  final Future<List<T>> Function(String query)? loader;
+
+  /// Async: how long to wait after the last keystroke before calling [loader].
+  final Duration debounce;
+
+  /// Async: message shown when [loader] throws.
+  final String errorText;
+
+  /// Async: label for the retry action shown in the error state.
+  final String retryText;
 
   /// Whether this dropdown selects multiple items. Set by the constructor.
   final bool multiSelect;
@@ -227,7 +303,8 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
 
   String _labelFor(T item) => widget.itemLabel?.call(item) ?? item.toString();
 
-  bool get _interactive => widget.enabled && widget.items.isNotEmpty;
+  bool get _interactive =>
+      widget.enabled && (widget.async || widget.items.isNotEmpty);
 
   @override
   void dispose() {
@@ -271,6 +348,11 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
           showSelectAll: widget.showSelectAll,
           selectAllLabel: widget.selectAllLabel,
           clearAllLabel: widget.clearAllLabel,
+          async: widget.async,
+          loader: widget.loader,
+          debounce: widget.debounce,
+          errorText: widget.errorText,
+          retryText: widget.retryText,
           value: widget.value,
           initialSelected: widget.selectedItems ?? const <Never>[],
           labelFor: _labelFor,

@@ -54,7 +54,15 @@ class _DemoPageState extends State<DemoPage> {
   City? _city;
   City? _groupedCity;
   City? _sideCity;
+  City? _asyncCity;
   List<City> _multiCities = <City>[];
+
+  /// Fake network search: filters [kCities] by [query] after a short delay.
+  Future<List<City>> _searchCities(String query) async {
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    final String q = query.toLowerCase();
+    return kCities.where((City c) => c.name.toLowerCase().contains(q)).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +125,17 @@ class _DemoPageState extends State<DemoPage> {
                     setState(() => _multiCities = list),
               ),
 
-              _section('5. Opens to the RIGHT'),
+              _section('5. Async load (debounced search)'),
+              CustomDropdown<City>.async(
+                loader: _searchCities,
+                value: _asyncCity,
+                itemLabel: (City c) => c.name,
+                searchHint: 'Type to search cities…',
+                hintText: 'Search remotely',
+                onChanged: (City c) => setState(() => _asyncCity = c),
+              ),
+
+              _section('6. Opens to the RIGHT'),
               CustomDropdown<City>(
                 items: kCities,
                 value: _sideCity,
@@ -129,7 +147,7 @@ class _DemoPageState extends State<DemoPage> {
                 onChanged: (City c) => setState(() => _sideCity = c),
               ),
 
-              _section('6. Disabled dropdown'),
+              _section('7. Disabled dropdown'),
               const CustomDropdown<String>(
                 items: <String>['X', 'Y'],
                 enabled: false,

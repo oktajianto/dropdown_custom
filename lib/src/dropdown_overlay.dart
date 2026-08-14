@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'custom_dropdown.dart';
@@ -25,6 +27,11 @@ class DropdownOverlay<T> extends StatefulWidget {
     required this.showSelectAll,
     required this.selectAllLabel,
     required this.clearAllLabel,
+    required this.async,
+    required this.loader,
+    required this.debounce,
+    required this.errorText,
+    required this.retryText,
     required this.value,
     required this.initialSelected,
     required this.labelFor,
@@ -72,6 +79,21 @@ class DropdownOverlay<T> extends StatefulWidget {
 
   /// Label for the clear action.
   final String clearAllLabel;
+
+  /// Whether items are loaded asynchronously via [loader].
+  final bool async;
+
+  /// Async: fetches items for the given (debounced) search query.
+  final Future<List<T>> Function(String query)? loader;
+
+  /// Async: debounce before calling [loader] after a keystroke.
+  final Duration debounce;
+
+  /// Async: message shown when [loader] throws.
+  final String errorText;
+
+  /// Async: label for the retry action.
+  final String retryText;
 
   /// Single-select: the currently selected item.
   final T? value;
@@ -136,6 +158,13 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   /// items while the menu stays open.
   late final List<T> _selected;
 
+  // Async loading state.
+  List<T> _asyncItems = <T>[];
+  bool _loading = false;
+  Object? _error;
+  Timer? _debounce;
+  int _requestId = 0;
+
   @override
   void initState() {
     super.initState();
@@ -145,6 +174,7 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
       duration: const Duration(milliseconds: 160),
     )..forward();
     _anim = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
+    if (widget.async) _load(_query);
   }
 
   bool _isSelected(T item) =>
@@ -191,8 +221,40 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _controller.dispose();
     super.dispose();
+  }
+
+  /// Runs [DropdownOverlay.loader] for [query]. A per-call [_requestId] guards
+  /// against a slow earlier request overwriting a newer one (race condition).
+  Future<void> _load(String query) async {
+    final int id = ++_requestId;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final List<T> result = await widget.loader!(query);
+      if (!mounted || id != _requestId) return;
+      setState(() {
+        _asyncItems = result;
+        _loading = false;
+      });
+    } catch (error) {
+      if (!mounted || id != _requestId) return;
+      setState(() {
+        _error = error;
+        _loading = false;
+      });
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() => _query = value);
+    if (!widget.async) return;
+    _debounce?.cancel();
+    _debounce = Timer(widget.debounce, () => _load(value));
   }
 
   bool _matches(T item) {
@@ -202,9 +264,12 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     return widget.labelFor(item).toLowerCase().contains(q);
   }
 
-  /// Builds the flat, filtered, grouped list of rows to render.
+  /// Builds the flat, filtered, grouped list of rows to render. In async mode
+  /// the loader is responsible for filtering, so results are used as-is.
   List<_Row<T>> _buildRows() {
-    final List<T> filtered = widget.items.where(_matches).toList();
+    final List<T> filtered = widget.async
+        ? _asyncItems
+        : widget.items.where(_matches).toList();
     if (widget.groupBy == null) {
       return filtered.map((T i) => _Row<T>.item(i)).toList();
     }
@@ -353,19 +418,66 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
             if (widget.enableSearch) _buildSearchField(theme),
             if (widget.multiSelect && widget.showSelectAll)
               _buildSelectAllRow(theme),
-            Flexible(
-              child: rows.isEmpty
-                  ? _buildEmpty(theme)
-                  : ListView.builder(
-                      padding: deco.menuPadding,
-                      shrinkWrap: true,
-                      itemCount: rows.length,
-                      itemBuilder: (context, index) =>
-                          _buildRow(theme, deco, rows[index]),
-                    ),
-            ),
+            Flexible(child: _buildBody(theme, deco, rows)),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Chooses what to render inside the scroll area: async loading/error
+  /// states take precedence, then the empty state, then the item list.
+  Widget _buildBody(
+    ThemeData theme,
+    DropdownDecoration deco,
+    List<_Row<T>> rows,
+  ) {
+    if (widget.async) {
+      if (_loading && rows.isEmpty) return _buildLoading(theme);
+      if (_error != null && rows.isEmpty) return _buildError(theme);
+    }
+    if (rows.isEmpty) return _buildEmpty(theme);
+    return ListView.builder(
+      padding: deco.menuPadding,
+      shrinkWrap: true,
+      itemCount: rows.length,
+      itemBuilder: (context, index) => _buildRow(theme, deco, rows[index]),
+    );
+  }
+
+  Widget _buildLoading(ThemeData theme) {
+    return const Padding(
+      padding: EdgeInsets.all(20),
+      child: Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(strokeWidth: 2.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildError(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            widget.errorText,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.error,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: () => _load(_query),
+            icon: const Icon(Icons.refresh, size: 18),
+            label: Text(widget.retryText),
+          ),
+        ],
       ),
     );
   }
@@ -409,10 +521,22 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
       child: TextField(
         autofocus: true,
-        onChanged: (String value) => setState(() => _query = value),
+        onChanged: _onSearchChanged,
         decoration: InputDecoration(
           hintText: widget.searchHint,
           prefixIcon: const Icon(Icons.search, size: 20),
+          // Show a subtle spinner while an async refetch is in flight, even
+          // when stale results are still visible.
+          suffixIcon: widget.async && _loading
+              ? const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : null,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(vertical: 8),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
