@@ -3,6 +3,10 @@
 - Add multi-select via the `CustomDropdown.multi` constructor: checkboxes,
   the menu stays open while toggling, `onSelectionChanged` reports the full
   selection, and `selectedItemsLabel` customizes the trigger text.
+- Optional "select all" / "clear" actions for multi-select via
+  `showSelectAll` (default off), with customizable `selectAllLabel` /
+  `clearAllLabel`. Both respect the active search filter and skip disabled
+  items.
 - Multi-select reuses all existing features (search, grouping, positioning,
   per-item enable/disable, custom colors).
 

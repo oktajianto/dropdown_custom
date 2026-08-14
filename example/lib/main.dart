@@ -109,6 +109,7 @@ class _DemoPageState extends State<DemoPage> {
                 groupBy: (City c) => c.province,
                 isItemEnabled: (City c) => c.available,
                 enableSearch: true,
+                showSelectAll: true,
                 hintText: 'Pick cities',
                 selectedItemsLabel: (List<City> s) =>
                     '${s.length} selected: ${s.map((City c) => c.name).join(', ')}',

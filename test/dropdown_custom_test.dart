@@ -205,5 +205,75 @@ void main() {
       expect(find.byIcon(Icons.check_box), findsOneWidget);
       expect(find.byIcon(Icons.check_box_outline_blank), findsOneWidget);
     });
+
+    testWidgets('select-all row is hidden by default', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango'],
+            onSelectionChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Select all'), findsNothing);
+      expect(find.text('Clear'), findsNothing);
+    });
+
+    testWidgets('select all picks enabled items and skips disabled ones', (
+      tester,
+    ) async {
+      List<String> selection = <String>[];
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango', 'Orange'],
+            isItemEnabled: (String v) => v != 'Mango',
+            showSelectAll: true,
+            onSelectionChanged: (List<String> v) => selection = v,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Select all'));
+      await tester.pumpAndSettle();
+      expect(selection, <String>['Apple', 'Orange']);
+
+      await tester.tap(find.text('Clear'));
+      await tester.pumpAndSettle();
+      expect(selection, isEmpty);
+    });
+
+    testWidgets('select all respects the active search filter', (tester) async {
+      List<String> selection = <String>[];
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango', 'Orange'],
+            enableSearch: true,
+            showSelectAll: true,
+            onSelectionChanged: (List<String> v) => selection = v,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'an');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Select all'));
+      await tester.pumpAndSettle();
+
+      // Only the filtered items ("Mango", "Orange") are selected.
+      expect(selection, <String>['Mango', 'Orange']);
+    });
   });
 }

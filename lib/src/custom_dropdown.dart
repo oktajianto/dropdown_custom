@@ -87,7 +87,10 @@ class CustomDropdown<T> extends StatefulWidget {
   }) : multiSelect = false,
        selectedItems = null,
        onSelectionChanged = null,
-       selectedItemsLabel = null;
+       selectedItemsLabel = null,
+       showSelectAll = false,
+       selectAllLabel = 'Select all',
+       clearAllLabel = 'Clear';
 
   /// Creates a multi-select dropdown that shows a checkbox on each row and
   /// keeps the menu open while the user toggles items.
@@ -105,6 +108,9 @@ class CustomDropdown<T> extends StatefulWidget {
     this.searchMatcher,
     this.hintText = 'Select',
     this.selectedItemsLabel,
+    this.showSelectAll = false,
+    this.selectAllLabel = 'Select all',
+    this.clearAllLabel = 'Clear',
     this.direction = DropdownDirection.auto,
     this.decoration = const DropdownDecoration(),
     this.enabled = true,
@@ -142,6 +148,17 @@ class CustomDropdown<T> extends StatefulWidget {
   /// Multi-select: builds the trigger label from the current selection. When
   /// `null`, the selected items' labels are joined with ", ".
   final String Function(List<T> selected)? selectedItemsLabel;
+
+  /// Multi-select: whether to show "select all" / "clear" actions above the
+  /// list. Defaults to `false`. Both actions operate on the items currently
+  /// visible (respecting the active search filter) and skip disabled items.
+  final bool showSelectAll;
+
+  /// Label for the "select all" action (used when [showSelectAll] is true).
+  final String selectAllLabel;
+
+  /// Label for the "clear" action (used when [showSelectAll] is true).
+  final String clearAllLabel;
 
   /// Maps an item to its display label. Defaults to `item.toString()`.
   final ItemLabel<T>? itemLabel;
@@ -251,6 +268,9 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
           decoration: widget.decoration,
           items: widget.items,
           multiSelect: widget.multiSelect,
+          showSelectAll: widget.showSelectAll,
+          selectAllLabel: widget.selectAllLabel,
+          clearAllLabel: widget.clearAllLabel,
           value: widget.value,
           initialSelected: widget.selectedItems ?? const <Never>[],
           labelFor: _labelFor,

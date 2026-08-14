@@ -80,6 +80,23 @@ CustomDropdown<City>.multi(
 The menu shows a checkbox on each row and stays open while the user toggles
 items; `onSelectionChanged` fires with the full selection on every change.
 
+Add optional "select all" / "clear" actions with `showSelectAll: true`
+(off by default). Both respect the active search filter and skip disabled
+items, and their labels are customizable:
+
+```dart
+CustomDropdown<City>.multi(
+  items: cities,
+  selectedItems: picked,
+  itemLabel: (c) => c.name,
+  enableSearch: true,
+  showSelectAll: true,
+  selectAllLabel: 'Select all',
+  clearAllLabel: 'Clear',
+  onSelectionChanged: (list) => setState(() => picked = list),
+)
+```
+
 ### Positioning and custom colors
 
 ```dart
@@ -108,6 +125,7 @@ CustomDropdown<City>(
 | `isItemEnabled` | Disables specific items. |
 | `enableSearch` | Shows a search box. |
 | `searchMatcher` | Custom search predicate. |
+| `showSelectAll` | Multi-select: show "select all" / "clear" actions. |
 | `direction` | `top`, `bottom`, `left`, `right`, or `auto`. |
 | `decoration` | Colors, radius, elevation, sizing. |
 | `itemBuilder` | Fully custom item rows. |

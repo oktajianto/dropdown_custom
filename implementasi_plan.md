@@ -73,7 +73,8 @@ test/
 - [x] Checkbox untuk item terpilih, menu tetap terbuka saat toggle
 - [x] `onSelectionChanged(List<T>)`
 - [x] `selectedItemsLabel` untuk kustom teks trigger
-- [ ] select-all/clear (menyusul bila diperlukan)
+- [x] select-all/clear opsional (`showSelectAll`, default off; hormati filter
+      search & lewati item disable; label bisa dikustom)
 
 ### Fase 3 — Async load
 

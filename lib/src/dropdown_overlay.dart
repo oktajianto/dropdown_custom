@@ -22,6 +22,9 @@ class DropdownOverlay<T> extends StatefulWidget {
     required this.decoration,
     required this.items,
     required this.multiSelect,
+    required this.showSelectAll,
+    required this.selectAllLabel,
+    required this.clearAllLabel,
     required this.value,
     required this.initialSelected,
     required this.labelFor,
@@ -60,6 +63,15 @@ class DropdownOverlay<T> extends StatefulWidget {
 
   /// Whether the menu is in multi-select (checkbox) mode.
   final bool multiSelect;
+
+  /// Multi-select: whether to show the select-all / clear action row.
+  final bool showSelectAll;
+
+  /// Label for the select-all action.
+  final String selectAllLabel;
+
+  /// Label for the clear action.
+  final String clearAllLabel;
 
   /// Single-select: the currently selected item.
   final T? value;
@@ -150,6 +162,30 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
         _selected.add(item);
       }
     });
+    widget.onSelectionChanged(List<T>.of(_selected));
+  }
+
+  bool _isEnabled(T item) => widget.isItemEnabled?.call(item) ?? true;
+
+  /// Items currently visible in the menu (after the search filter).
+  Iterable<T> get _visibleItems => widget.items.where(_matches);
+
+  /// Selects every visible, enabled item (union with the existing selection).
+  void _selectAllVisible() {
+    setState(() {
+      for (final T item in _visibleItems) {
+        if (_isEnabled(item) && !_selected.contains(item)) {
+          _selected.add(item);
+        }
+      }
+    });
+    widget.onSelectionChanged(List<T>.of(_selected));
+  }
+
+  /// Deselects every visible item, leaving items hidden by the filter intact.
+  void _clearVisible() {
+    final Set<T> visible = _visibleItems.toSet();
+    setState(() => _selected.removeWhere(visible.contains));
     widget.onSelectionChanged(List<T>.of(_selected));
   }
 
@@ -315,6 +351,8 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             if (widget.enableSearch) _buildSearchField(theme),
+            if (widget.multiSelect && widget.showSelectAll)
+              _buildSelectAllRow(theme),
             Flexible(
               child: rows.isEmpty
                   ? _buildEmpty(theme)
@@ -328,6 +366,40 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSelectAllRow(ThemeData theme) {
+    final Color color = theme.colorScheme.primary;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+      child: Row(
+        children: <Widget>[
+          TextButton.icon(
+            onPressed: _selectAllVisible,
+            icon: const Icon(Icons.done_all, size: 18),
+            label: Text(widget.selectAllLabel),
+            style: TextButton.styleFrom(
+              foregroundColor: color,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(0, 36),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+          const Spacer(),
+          TextButton.icon(
+            onPressed: _clearVisible,
+            icon: const Icon(Icons.clear_all, size: 18),
+            label: Text(widget.clearAllLabel),
+            style: TextButton.styleFrom(
+              foregroundColor: theme.hintColor,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              minimumSize: const Size(0, 36),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+          ),
+        ],
       ),
     );
   }
