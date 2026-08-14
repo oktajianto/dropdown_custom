@@ -99,12 +99,15 @@ test/
 
 ### Fase 4 — Polish & rilis pub.dev
 
-- [ ] Dokumentasi lengkap + dartdoc pada API publik
-- [ ] `README.md` dengan GIF/screenshot + contoh kode
-- [ ] `CHANGELOG.md`, `LICENSE` (MIT)
-- [ ] Repo GitHub publik + field `repository`/`homepage` di pubspec
-- [ ] `dart pub publish --dry-run` bersih (pana score)
-- [ ] Publish
+- [x] Dokumentasi lengkap + dartdoc pada API publik
+- [x] `README.md` dengan contoh kode lengkap (GIF/screenshot opsional, menyusul)
+- [x] `CHANGELOG.md`, `LICENSE` (MIT)
+- [x] Repo GitHub publik + field `repository`/`homepage` di pubspec
+- [x] `topics` di pubspec + constraint SDK/Flutter yang benar
+- [x] Archive ramping (26 KB) — `example/build` dikecualikan via `.pubignore`
+- [x] `dart pub publish --dry-run` bersih (0 warning saat git clean)
+- [ ] **Publish** — dijalankan pengguna sendiri (`flutter pub publish`, login
+      Google `oktajianto99@gmail.com`)
 
 ## Keputusan yang Sudah Diambil
 
