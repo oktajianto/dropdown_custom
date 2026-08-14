@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
-import 'dropdown_decoration.dart';
 import 'dropdown_direction.dart';
+import 'dropdown_field_style.dart';
 import 'dropdown_loading.dart';
+import 'dropdown_menu_style.dart';
 import 'dropdown_overlay.dart';
+import 'dropdown_search_style.dart';
 
 /// Signature for turning an item of type [T] into its display label.
 typedef ItemLabel<T> = String Function(T item);
@@ -85,7 +87,9 @@ class CustomDropdown<T> extends StatefulWidget {
     this.searchMatcher,
     this.hintText = 'Select',
     this.direction = DropdownDirection.auto,
-    this.decoration = const DropdownDecoration(),
+    this.fieldStyle = const DropdownFieldStyle(),
+    this.menuStyle = const DropdownMenuStyle(),
+    this.searchStyle = const DropdownSearchStyle(),
     this.enabled = true,
     this.menuWidth,
     this.gap = 4,
@@ -128,7 +132,9 @@ class CustomDropdown<T> extends StatefulWidget {
     this.selectAllLabel = 'Select all',
     this.clearAllLabel = 'Clear',
     this.direction = DropdownDirection.auto,
-    this.decoration = const DropdownDecoration(),
+    this.fieldStyle = const DropdownFieldStyle(),
+    this.menuStyle = const DropdownMenuStyle(),
+    this.searchStyle = const DropdownSearchStyle(),
     this.enabled = true,
     this.menuWidth,
     this.gap = 4,
@@ -180,7 +186,9 @@ class CustomDropdown<T> extends StatefulWidget {
     this.retryText = 'Retry',
     this.loading = const DropdownLoading.circular(),
     this.direction = DropdownDirection.auto,
-    this.decoration = const DropdownDecoration(),
+    this.fieldStyle = const DropdownFieldStyle(),
+    this.menuStyle = const DropdownMenuStyle(),
+    this.searchStyle = const DropdownSearchStyle(),
     this.enabled = true,
     this.menuWidth,
     this.gap = 4,
@@ -290,8 +298,14 @@ class CustomDropdown<T> extends StatefulWidget {
   /// Where the menu opens relative to the trigger.
   final DropdownDirection direction;
 
-  /// Visual configuration for the trigger and menu.
-  final DropdownDecoration decoration;
+  /// Styling for the input field (the tappable trigger).
+  final DropdownFieldStyle fieldStyle;
+
+  /// Styling for the open dropdown menu (the box and its rows).
+  final DropdownMenuStyle menuStyle;
+
+  /// Styling for the search box (when `enableSearch` is on).
+  final DropdownSearchStyle searchStyle;
 
   /// Whether the whole dropdown is interactive.
   final bool enabled;
@@ -373,7 +387,8 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
           direction: resolved,
           gap: widget.gap,
           menuWidth: widget.menuWidth,
-          decoration: widget.decoration,
+          menuStyle: widget.menuStyle,
+          searchStyle: widget.searchStyle,
           items: widget.items,
           multiSelect: widget.multiSelect,
           showSelectAll: widget.showSelectAll,
@@ -432,7 +447,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
 
     final double spaceBelow = screen.height - (topLeft.dy + triggerSize.height);
     final double spaceAbove = topLeft.dy;
-    final double needed = widget.decoration.maxHeight + widget.gap;
+    final double needed = widget.menuStyle.maxHeight + widget.gap;
 
     if (spaceBelow >= needed || spaceBelow >= spaceAbove) {
       return DropdownDirection.bottom;
@@ -459,7 +474,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final DropdownDecoration deco = widget.decoration;
+    final DropdownFieldStyle fs = widget.fieldStyle;
     final ({String text, bool isHint}) label = _triggerLabel();
 
     return CompositedTransformTarget(
@@ -467,14 +482,17 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: deco.borderRadius,
+          borderRadius: fs.borderRadius,
           onTap: _interactive ? _toggle : null,
           child: Container(
-            padding: deco.itemPadding,
+            padding: fs.padding,
             decoration: BoxDecoration(
-              borderRadius: deco.borderRadius,
-              border: deco.border ?? Border.all(color: theme.dividerColor),
-              color: deco.backgroundColor,
+              borderRadius: fs.borderRadius,
+              border: Border.all(
+                color: fs.borderColor ?? theme.dividerColor,
+                width: fs.borderWidth,
+              ),
+              color: fs.backgroundColor,
             ),
             child: Row(
               children: <Widget>[
@@ -486,14 +504,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
                   child: Text(
                     label.text,
                     overflow: TextOverflow.ellipsis,
-                    style: (deco.textStyle ?? theme.textTheme.bodyMedium)
-                        ?.copyWith(
-                          color: !widget.enabled
-                              ? theme.disabledColor
-                              : label.isHint
-                              ? theme.hintColor
-                              : null,
-                        ),
+                    style: _triggerTextStyle(theme, fs, label.isHint),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -502,9 +513,9 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
                   duration: const Duration(milliseconds: 180),
                   child: Icon(
                     Icons.keyboard_arrow_down,
-                    color: widget.enabled
-                        ? theme.iconTheme.color
-                        : theme.disabledColor,
+                    color: !widget.enabled
+                        ? theme.disabledColor
+                        : (fs.iconColor ?? theme.iconTheme.color),
                   ),
                 ),
               ],
@@ -512,6 +523,25 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
           ),
         ),
       ),
+    );
+  }
+
+  /// Resolves the trigger text style from [fs], honoring the hint and disabled
+  /// states while letting an explicit style win.
+  TextStyle? _triggerTextStyle(
+    ThemeData theme,
+    DropdownFieldStyle fs,
+    bool isHint,
+  ) {
+    final TextStyle? explicit = isHint ? fs.hintStyle : fs.textStyle;
+    if (!widget.enabled) {
+      return (explicit ?? theme.textTheme.bodyMedium)?.copyWith(
+        color: theme.disabledColor,
+      );
+    }
+    if (explicit != null) return explicit;
+    return theme.textTheme.bodyMedium?.copyWith(
+      color: isHint ? theme.hintColor : null,
     );
   }
 }

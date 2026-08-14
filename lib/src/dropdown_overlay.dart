@@ -3,9 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'custom_dropdown.dart';
-import 'dropdown_decoration.dart';
 import 'dropdown_direction.dart';
 import 'dropdown_loading.dart';
+import 'dropdown_menu_style.dart';
+import 'dropdown_search_style.dart';
 
 /// The floating menu shown while a [CustomDropdown] is open.
 ///
@@ -22,7 +23,8 @@ class DropdownOverlay<T> extends StatefulWidget {
     required this.direction,
     required this.gap,
     required this.menuWidth,
-    required this.decoration,
+    required this.menuStyle,
+    required this.searchStyle,
     required this.items,
     required this.multiSelect,
     required this.showSelectAll,
@@ -66,8 +68,11 @@ class DropdownOverlay<T> extends StatefulWidget {
   /// Explicit menu width, or `null` to derive one.
   final double? menuWidth;
 
-  /// Visual configuration.
-  final DropdownDecoration decoration;
+  /// Styling for the menu box and its rows.
+  final DropdownMenuStyle menuStyle;
+
+  /// Styling for the search box.
+  final DropdownSearchStyle searchStyle;
 
   /// Selectable items.
   final List<T> items;
@@ -368,7 +373,7 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final DropdownDecoration deco = widget.decoration;
+    final DropdownMenuStyle deco = widget.menuStyle;
     final anchors = _anchors();
 
     return Stack(
@@ -402,7 +407,7 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     );
   }
 
-  Widget _buildMenu(ThemeData theme, DropdownDecoration deco) {
+  Widget _buildMenu(ThemeData theme, DropdownMenuStyle deco) {
     final List<_Row<T>> rows = _buildRows();
 
     return Material(
@@ -413,7 +418,9 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
         decoration: BoxDecoration(
           color: deco.backgroundColor ?? theme.colorScheme.surface,
           borderRadius: deco.borderRadius,
-          border: deco.border,
+          border: deco.borderColor != null
+              ? Border.all(color: deco.borderColor!, width: deco.borderWidth)
+              : null,
           boxShadow: deco.elevation > 0
               ? <BoxShadow>[
                   BoxShadow(
@@ -442,7 +449,7 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   /// states take precedence, then the empty state, then the item list.
   Widget _buildBody(
     ThemeData theme,
-    DropdownDecoration deco,
+    DropdownMenuStyle deco,
     List<_Row<T>> rows,
   ) {
     if (widget.async) {
@@ -458,7 +465,7 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     );
   }
 
-  Widget _buildLoading(ThemeData theme, DropdownDecoration deco) {
+  Widget _buildLoading(ThemeData theme, DropdownMenuStyle deco) {
     final DropdownLoading loading = widget.loading;
 
     if (loading.builder != null) return loading.builder!(context);
@@ -556,14 +563,26 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   }
 
   Widget _buildSearchField(ThemeData theme) {
+    final DropdownSearchStyle ss = widget.searchStyle;
+    final Color normalBorder = ss.borderColor ?? theme.dividerColor;
+    final Color focusedBorder =
+        ss.focusedBorderColor ?? theme.colorScheme.primary;
+
+    OutlineInputBorder borderWith(Color color) => OutlineInputBorder(
+      borderRadius: ss.borderRadius,
+      borderSide: BorderSide(color: color, width: ss.borderWidth),
+    );
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
       child: TextField(
         autofocus: true,
         onChanged: _onSearchChanged,
+        style: ss.textStyle,
         decoration: InputDecoration(
           hintText: widget.searchHint,
-          prefixIcon: const Icon(Icons.search, size: 20),
+          hintStyle: ss.hintStyle,
+          prefixIcon: Icon(Icons.search, size: 20, color: ss.iconColor),
           // Show a subtle spinner while an async refetch is in flight, even
           // when stale results are still visible.
           suffixIcon: widget.async && _loading
@@ -577,8 +596,12 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
                 )
               : null,
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 8),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          filled: ss.fillColor != null,
+          fillColor: ss.fillColor,
+          contentPadding: ss.contentPadding,
+          border: borderWith(normalBorder),
+          enabledBorder: borderWith(normalBorder),
+          focusedBorder: borderWith(focusedBorder),
         ),
       ),
     );
@@ -595,7 +618,7 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     );
   }
 
-  Widget _buildRow(ThemeData theme, DropdownDecoration deco, _Row<T> row) {
+  Widget _buildRow(ThemeData theme, DropdownMenuStyle deco, _Row<T> row) {
     if (row.isHeader) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
@@ -638,13 +661,13 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
 
   Widget _defaultRowContent(
     ThemeData theme,
-    DropdownDecoration deco,
+    DropdownMenuStyle deco,
     T item,
     bool isSelected,
     bool isEnabled,
   ) {
     final TextStyle base =
-        deco.textStyle ?? theme.textTheme.bodyMedium ?? const TextStyle();
+        deco.itemTextStyle ?? theme.textTheme.bodyMedium ?? const TextStyle();
     final TextStyle style = !isEnabled
         ? base.copyWith(color: deco.disabledColor ?? theme.disabledColor)
         : isSelected

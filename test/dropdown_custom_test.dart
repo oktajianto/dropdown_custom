@@ -141,6 +141,74 @@ void main() {
     });
   });
 
+  group('CustomDropdown styling', () {
+    testWidgets('fieldStyle.textStyle is applied to the trigger', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            items: const <String>['Apple'],
+            value: 'Apple',
+            fieldStyle: const DropdownFieldStyle(
+              textStyle: TextStyle(fontSize: 22),
+            ),
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      final Text trigger = tester.widget<Text>(find.text('Apple'));
+      expect(trigger.style?.fontSize, 22);
+    });
+
+    testWidgets('menuStyle.itemTextStyle is applied to list rows', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            items: const <String>['Apple', 'Mango'],
+            menuStyle: const DropdownMenuStyle(
+              itemTextStyle: TextStyle(fontSize: 9),
+            ),
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      final Text row = tester.widget<Text>(find.text('Apple'));
+      expect(row.style?.fontSize, 9);
+    });
+
+    testWidgets('searchStyle.hintStyle is applied to the search box', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            items: const <String>['Apple', 'Mango'],
+            enableSearch: true,
+            searchHint: 'Find',
+            searchStyle: const DropdownSearchStyle(
+              hintStyle: TextStyle(fontSize: 11),
+            ),
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      final TextField field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.decoration?.hintStyle?.fontSize, 11);
+    });
+  });
+
   group('CustomDropdown multi-select', () {
     testWidgets('shows the hint when nothing is selected', (tester) async {
       await tester.pumpWidget(

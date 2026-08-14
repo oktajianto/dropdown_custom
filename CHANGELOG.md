@@ -1,3 +1,21 @@
+## 0.4.0
+
+- Granular, independent styling split into three groups, replacing the old
+  `DropdownDecoration`:
+  - `fieldStyle` (`DropdownFieldStyle`) — input field: background, border color
+    and width, radius, value/hint text styles, arrow icon color, padding.
+  - `menuStyle` (`DropdownMenuStyle`) — menu box and rows: background, border,
+    radius, elevation, item/selected/group-header text styles, highlight and
+    selected colors, disabled color, sizing.
+  - `searchStyle` (`DropdownSearchStyle`) — search bar: fill, border and
+    focused-border colors, radius, text and hint styles, icon color, padding.
+- The input field and the menu can now be themed separately (previously they
+  shared one decoration), and the search bar is fully themable.
+
+  Migration: replace `decoration: DropdownDecoration(...)` with the relevant
+  `fieldStyle` / `menuStyle` / `searchStyle`. (`textStyle` on menu items is now
+  `menuStyle.itemTextStyle`.)
+
 ## 0.3.0
 
 - Add async loading via the `CustomDropdown.async` constructor: a

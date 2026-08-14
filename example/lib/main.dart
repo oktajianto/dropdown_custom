@@ -94,7 +94,7 @@ class _DemoPageState extends State<DemoPage> {
                 onChanged: (City c) => setState(() => _city = c),
               ),
 
-              _section('3. Grouped + custom highlight color'),
+              _section('3. Grouped + granular field/menu/search styling'),
               CustomDropdown<City>(
                 items: kCities,
                 value: _groupedCity,
@@ -102,9 +102,30 @@ class _DemoPageState extends State<DemoPage> {
                 groupBy: (City c) => c.province,
                 enableSearch: true,
                 hintText: 'Pick a city (grouped)',
-                decoration: const DropdownDecoration(
-                  highlightColor: Color(0x1A00BCD4),
-                  selectedColor: Color(0x3300BCD4),
+                // INPUT field styling.
+                fieldStyle: DropdownFieldStyle(
+                  backgroundColor: Colors.teal.shade50,
+                  borderColor: Colors.teal,
+                  borderWidth: 1.5,
+                  textStyle: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                // MENU box styling.
+                menuStyle: DropdownMenuStyle(
+                  backgroundColor: Colors.teal.shade50,
+                  borderColor: Colors.teal.shade200,
+                  highlightColor: Colors.teal.withValues(alpha: 0.12),
+                  selectedColor: Colors.teal.withValues(alpha: 0.22),
+                  itemTextStyle: const TextStyle(fontSize: 14),
+                ),
+                // SEARCH bar styling.
+                searchStyle: DropdownSearchStyle(
+                  fillColor: Colors.white,
+                  borderColor: Colors.teal.shade200,
+                  focusedBorderColor: Colors.teal,
+                  hintStyle: TextStyle(color: Colors.teal.shade300),
                 ),
                 onChanged: (City c) => setState(() => _groupedCity = c),
               ),

@@ -13,6 +13,8 @@ export 'src/custom_dropdown.dart'
         ItemEnabled,
         DropdownItemBuilder,
         DropdownErrorBuilder;
-export 'src/dropdown_decoration.dart' show DropdownDecoration;
 export 'src/dropdown_direction.dart' show DropdownDirection;
+export 'src/dropdown_field_style.dart' show DropdownFieldStyle;
 export 'src/dropdown_loading.dart' show DropdownLoading;
+export 'src/dropdown_menu_style.dart' show DropdownMenuStyle;
+export 'src/dropdown_search_style.dart' show DropdownSearchStyle;

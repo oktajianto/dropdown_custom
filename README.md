@@ -157,18 +157,56 @@ CustomDropdown<User>.async(
 `emptyBuilder` also works on the single- and multi-select constructors (shown
 when a search yields no matches).
 
-### Positioning and custom colors
+### Positioning
 
 ```dart
 CustomDropdown<City>(
   items: cities,
   itemLabel: (c) => c.name,
-  direction: DropdownDirection.right,
-  decoration: const DropdownDecoration(
-    highlightColor: Color(0x1A00BCD4),
-    selectedColor: Color(0x3300BCD4),
+  direction: DropdownDirection.right, // top / bottom / left / right / auto
+  onChanged: (c) => ...,
+)
+```
+
+### Styling (field / menu / search — independently)
+
+Styling is split into three groups so the input field, the menu box, and the
+search bar can be themed separately:
+
+```dart
+CustomDropdown<City>(
+  items: cities,
+  itemLabel: (c) => c.name,
+  enableSearch: true,
+
+  // The input field (trigger).
+  fieldStyle: DropdownFieldStyle(
+    backgroundColor: Colors.white,
+    borderColor: Colors.teal,
+    borderWidth: 1.5,
+    textStyle: const TextStyle(fontSize: 16, color: Colors.black87),
+    iconColor: Colors.teal,
+  ),
+
+  // The dropdown box and its list rows.
+  menuStyle: DropdownMenuStyle(
+    backgroundColor: Colors.grey.shade50,
+    borderColor: Colors.teal.shade100,
+    itemTextStyle: const TextStyle(fontSize: 14),
+    selectedTextStyle: const TextStyle(fontWeight: FontWeight.bold),
+    highlightColor: Colors.teal.shade50,
     maxHeight: 280,
   ),
+
+  // The search bar.
+  searchStyle: DropdownSearchStyle(
+    fillColor: Colors.grey.shade100,
+    borderColor: Colors.grey.shade300,
+    focusedBorderColor: Colors.teal,
+    hintStyle: const TextStyle(color: Colors.grey),
+    textStyle: const TextStyle(fontSize: 14),
+  ),
+
   onChanged: (c) => ...,
 )
 ```
@@ -187,7 +225,9 @@ CustomDropdown<City>(
 | `searchMatcher` | Custom search predicate. |
 | `showSelectAll` | Multi-select: show "select all" / "clear" actions. |
 | `direction` | `top`, `bottom`, `left`, `right`, or `auto`. |
-| `decoration` | Colors, radius, elevation, sizing. |
+| `fieldStyle` | Styling for the input field (colors, border, font, padding). |
+| `menuStyle` | Styling for the menu box and rows (colors, border, fonts, size). |
+| `searchStyle` | Styling for the search bar (fill, border, hint, text, icon). |
 | `itemBuilder` | Fully custom item rows. |
 | `enabled` | Enables/disables the whole dropdown. |
 

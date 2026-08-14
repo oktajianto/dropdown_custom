@@ -89,6 +89,14 @@ test/
       `errorBuilder` menerima error + callback retry
 - [ ] Async multi-select (menyusul bila diperlukan)
 
+### Fase 3.5 — Styling granular (SELESAI)
+
+- [x] Pisah styling jadi 3 grup independen (ganti `DropdownDecoration`):
+      `DropdownFieldStyle` (input), `DropdownMenuStyle` (kotak+list),
+      `DropdownSearchStyle` (searchbar)
+- [x] Input & menu bisa diwarnai terpisah; searchbar fully themable
+      (fill, border, focused border, hint, text, icon)
+
 ### Fase 4 — Polish & rilis pub.dev
 
 - [ ] Dokumentasi lengkap + dartdoc pada API publik
