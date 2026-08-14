@@ -30,5 +30,12 @@ jobs:
       - name: Run tests
         run: flutter test
 
+      - name: Diagnose git state
+        run: |
+          echo "== git autocrlf ==" && git config -l | grep -i autocrlf || echo "(unset)"
+          echo "== git status ==" && git status --porcelain || true
+          echo "== ls-files --eol ==" && git ls-files --eol analysis_options.yaml example/analysis_options.yaml
+          echo "== diff (if any) ==" && git --no-pager diff -- analysis_options.yaml example/analysis_options.yaml | head -60 || true
+
       - name: Publish dry run
         run: flutter pub publish --dry-run
