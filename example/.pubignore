@@ -1,3 +1,11 @@
+# A .pubignore replaces .gitignore for this directory when publishing, so the
+# usual generated/build output must be re-listed here or it leaks into the
+# published archive.
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
 # Keep the published package lean: the example only needs its Dart source and
 # pubspec to demonstrate usage on pub.dev. Generated platform scaffolding is
 # not useful to package consumers.

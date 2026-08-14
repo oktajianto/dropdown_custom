@@ -7,9 +7,18 @@ homepage: https://github.com/oktajianto/dropdown_custom
 repository: https://github.com/oktajianto/dropdown_custom
 issue_tracker: https://github.com/oktajianto/dropdown_custom/issues
 
+topics:
+  - dropdown
+  - ui
+  - widgets
+  - picker
+  - select
+
+# Floor is set by the newest framework API used (Color.withValues), which
+# landed in Flutter 3.27 / Dart 3.6.
 environment:
-  sdk: ^3.12.2
-  flutter: ">=1.17.0"
+  sdk: ">=3.6.0 <4.0.0"
+  flutter: ">=3.27.0"
 
 dependencies:
   flutter:
