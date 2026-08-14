@@ -14,11 +14,11 @@ topics:
   - picker
   - select
 
-# Floor is set by the newest framework API used (Color.withValues), which
-# landed in Flutter 3.27 / Dart 3.6.
+# Floor covers the newest framework API used (Color.withValues, Flutter 3.27 /
+# Dart 3.6) and the modern "tall" formatter style (Dart 3.7+).
 environment:
-  sdk: ">=3.6.0 <4.0.0"
-  flutter: ">=3.27.0"
+  sdk: ">=3.7.0 <4.0.0"
+  flutter: ">=3.29.0"
 
 dependencies:
   flutter:

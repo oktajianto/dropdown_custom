@@ -4,9 +4,8 @@ import 'package:dropdown_custom/dropdown_custom.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Widget _wrap(Widget child) => MaterialApp(
-  home: Scaffold(body: Center(child: child)),
-);
+Widget _wrap(Widget child) =>
+    MaterialApp(home: Scaffold(body: Center(child: child)));
 
 void main() {
   group('CustomDropdown single-select', () {
@@ -481,13 +480,16 @@ void main() {
               if (calls == 1) throw Exception('kaboom');
               return <String>['OK'];
             },
-            errorBuilder:
-                (BuildContext context, Object error, VoidCallback retry) {
-                  return TextButton(
-                    onPressed: retry,
-                    child: Text('Custom error: $error'),
-                  );
-                },
+            errorBuilder: (
+              BuildContext context,
+              Object error,
+              VoidCallback retry,
+            ) {
+              return TextButton(
+                onPressed: retry,
+                child: Text('Custom error: $error'),
+              );
+            },
             onChanged: (_) {},
           ),
         ),

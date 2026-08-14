@@ -285,9 +285,8 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   /// Builds the flat, filtered, grouped list of rows to render. In async mode
   /// the loader is responsible for filtering, so results are used as-is.
   List<_Row<T>> _buildRows() {
-    final List<T> filtered = widget.async
-        ? _asyncItems
-        : widget.items.where(_matches).toList();
+    final List<T> filtered =
+        widget.async ? _asyncItems : widget.items.where(_matches).toList();
     if (widget.groupBy == null) {
       return filtered.map((T i) => _Row<T>.item(i)).toList();
     }
@@ -418,18 +417,23 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
         decoration: BoxDecoration(
           color: deco.backgroundColor ?? theme.colorScheme.surface,
           borderRadius: deco.borderRadius,
-          border: deco.borderColor != null
-              ? Border.all(color: deco.borderColor!, width: deco.borderWidth)
-              : null,
-          boxShadow: deco.elevation > 0
-              ? <BoxShadow>[
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.15),
-                    blurRadius: deco.elevation * 2,
-                    offset: Offset(0, deco.elevation / 2),
-                  ),
-                ]
-              : null,
+          border:
+              deco.borderColor != null
+                  ? Border.all(
+                    color: deco.borderColor!,
+                    width: deco.borderWidth,
+                  )
+                  : null,
+          boxShadow:
+              deco.elevation > 0
+                  ? <BoxShadow>[
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.15),
+                      blurRadius: deco.elevation * 2,
+                      offset: Offset(0, deco.elevation / 2),
+                    ),
+                  ]
+                  : null,
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -585,16 +589,17 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
           prefixIcon: Icon(Icons.search, size: 20, color: ss.iconColor),
           // Show a subtle spinner while an async refetch is in flight, even
           // when stale results are still visible.
-          suffixIcon: widget.async && _loading
-              ? const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                )
-              : null,
+          suffixIcon:
+              widget.async && _loading
+                  ? const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
+                  : null,
           isDense: true,
           filled: ss.fillColor != null,
           fillColor: ss.fillColor,
@@ -639,9 +644,10 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     final bool isSelected = _isSelected(item);
     final bool isEnabled = widget.isItemEnabled?.call(item) ?? true;
 
-    final Widget content = widget.itemBuilder != null
-        ? widget.itemBuilder!(context, item, isSelected, isEnabled)
-        : _defaultRowContent(theme, deco, item, isSelected, isEnabled);
+    final Widget content =
+        widget.itemBuilder != null
+            ? widget.itemBuilder!(context, item, isSelected, isEnabled)
+            : _defaultRowContent(theme, deco, item, isSelected, isEnabled);
 
     return _HoverableRow(
       enabled: isEnabled,
@@ -668,11 +674,13 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   ) {
     final TextStyle base =
         deco.itemTextStyle ?? theme.textTheme.bodyMedium ?? const TextStyle();
-    final TextStyle style = !isEnabled
-        ? base.copyWith(color: deco.disabledColor ?? theme.disabledColor)
-        : isSelected
-        ? (deco.selectedTextStyle ?? base.copyWith(fontWeight: FontWeight.w600))
-        : base;
+    final TextStyle style =
+        !isEnabled
+            ? base.copyWith(color: deco.disabledColor ?? theme.disabledColor)
+            : isSelected
+            ? (deco.selectedTextStyle ??
+                base.copyWith(fontWeight: FontWeight.w600))
+            : base;
 
     return Padding(
       padding: deco.itemPadding,
@@ -682,11 +690,12 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
             Icon(
               isSelected ? Icons.check_box : Icons.check_box_outline_blank,
               size: 20,
-              color: !isEnabled
-                  ? (deco.disabledColor ?? theme.disabledColor)
-                  : isSelected
-                  ? theme.colorScheme.primary
-                  : theme.hintColor,
+              color:
+                  !isEnabled
+                      ? (deco.disabledColor ?? theme.disabledColor)
+                      : isSelected
+                      ? theme.colorScheme.primary
+                      : theme.hintColor,
             ),
             const SizedBox(width: 12),
           ],
@@ -740,9 +749,10 @@ class _HoverableRowState extends State<_HoverableRow> {
     }
 
     return MouseRegion(
-      cursor: widget.enabled
-          ? SystemMouseCursors.click
-          : SystemMouseCursors.forbidden,
+      cursor:
+          widget.enabled
+              ? SystemMouseCursors.click
+              : SystemMouseCursors.forbidden,
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: GestureDetector(

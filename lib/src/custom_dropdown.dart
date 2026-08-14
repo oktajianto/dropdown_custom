@@ -460,9 +460,10 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
     if (widget.multiSelect) {
       final List<T> selected = widget.selectedItems ?? const <Never>[];
       if (selected.isEmpty) return (text: widget.hintText, isHint: true);
-      final String text = widget.selectedItemsLabel != null
-          ? widget.selectedItemsLabel!(selected)
-          : selected.map(_labelFor).join(', ');
+      final String text =
+          widget.selectedItemsLabel != null
+              ? widget.selectedItemsLabel!(selected)
+              : selected.map(_labelFor).join(', ');
       return (text: text, isHint: false);
     }
     final T? value = widget.value;
@@ -513,9 +514,10 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
                   duration: const Duration(milliseconds: 180),
                   child: Icon(
                     Icons.keyboard_arrow_down,
-                    color: !widget.enabled
-                        ? theme.disabledColor
-                        : (fs.iconColor ?? theme.iconTheme.color),
+                    color:
+                        !widget.enabled
+                            ? theme.disabledColor
+                            : (fs.iconColor ?? theme.iconTheme.color),
                   ),
                 ),
               ],
