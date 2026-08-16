@@ -106,8 +106,7 @@ test/
 - [x] `topics` di pubspec + constraint SDK/Flutter yang benar
 - [x] Archive ramping (26 KB) — `example/build` dikecualikan via `.pubignore`
 - [x] `dart pub publish --dry-run` bersih (0 warning saat git clean)
-- [ ] **Publish** — dijalankan pengguna sendiri (`flutter pub publish`, login
-      Google `oktajianto99@gmail.com`)
+- [x] **Publish**
 
 ## Keputusan yang Sudah Diambil
 
@@ -115,4 +114,4 @@ test/
 - **Model item:** generic `<T>` + callback (bukan class pembungkus wajib).
 - **Bahasa dokumentasi:** Inggris.
 - **Scope awal:** fondasi + single-select dulu, sisanya bertahap.
-- **Lisensi:** MIT (akan difinalkan di Fase 4).
+- **Lisensi:** MIT.
