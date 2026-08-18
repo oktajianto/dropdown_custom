@@ -56,6 +56,8 @@ class _DemoPageState extends State<DemoPage> {
   City? _sideCity;
   City? _asyncCity;
   List<City> _multiCities = <City>[];
+  City? _formCity;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   /// Fake network search: filters [kCities] by [query] after a short delay.
   Future<List<City>> _searchCities(String query) async {
@@ -74,12 +76,14 @@ class _DemoPageState extends State<DemoPage> {
           child: ListView(
             padding: const EdgeInsets.all(24),
             children: <Widget>[
-              _section('1. Simplest — List<String>'),
+              _section('1. Simplest — List<String> (clearable)'),
               CustomDropdown<String>(
                 items: const <String>['Apple', 'Mango', 'Orange', 'Banana'],
                 value: _fruit,
                 hintText: 'Pick a fruit',
+                clearable: true,
                 onChanged: (String v) => setState(() => _fruit = v),
+                onCleared: () => setState(() => _fruit = null),
               ),
 
               _section('2. Model + search + disabled items'),
@@ -175,6 +179,38 @@ class _DemoPageState extends State<DemoPage> {
                 enabled: false,
                 hintText: 'Disabled',
                 onChanged: _noop,
+              ),
+
+              _section('8. Inside a Form (validation)'),
+              Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: <Widget>[
+                    CustomDropdown<City>(
+                      items: kCities,
+                      value: _formCity,
+                      itemLabel: (City c) => c.name,
+                      hintText: 'Pick a city (required)',
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      validator: (City? c) =>
+                          c == null ? 'Please pick a city' : null,
+                      onChanged: (City c) => setState(() => _formCity = c),
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton(
+                      onPressed: () {
+                        final bool ok = _formKey.currentState!.validate();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(ok ? 'Valid!' : 'Fix the errors'),
+                          ),
+                        );
+                      },
+                      child: const Text('Submit'),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

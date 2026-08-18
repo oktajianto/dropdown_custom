@@ -65,6 +65,67 @@ CustomDropdown<String>(
 )
 ```
 
+### Clearable (single-select)
+
+Show a ✕ button on the trigger to reset the selection. Because `onChanged`
+returns a non-null `T`, clearing is reported through a separate `onCleared`
+callback where you set your value back to `null`:
+
+```dart
+CustomDropdown<String>(
+  items: const ['Apple', 'Mango', 'Orange'],
+  value: selected,
+  clearable: true,
+  onChanged: (value) => setState(() => selected = value),
+  onCleared: () => setState(() => selected = null),
+)
+```
+
+### Inside a Form, with validation
+
+Pass a `validator` to make the dropdown a `FormField`: it joins the enclosing
+`Form`, so `Form.validate()`/`save()` include it. On a failed validation the
+error message appears below the trigger **and the field outline turns red**
+(the theme's error color). Use `autovalidateMode` to validate as the user
+interacts instead of only on submit:
+
+```dart
+final formKey = GlobalKey<FormState>();
+
+Form(
+  key: formKey,
+  child: Column(
+    children: [
+      CustomDropdown<City>(
+        items: cities,
+        value: selected,
+        itemLabel: (c) => c.name,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
+        validator: (c) => c == null ? 'Please pick a city' : null,
+        onChanged: (c) => setState(() => selected = c),
+      ),
+      ElevatedButton(
+        onPressed: () => formKey.currentState!.validate(),
+        child: const Text('Submit'),
+      ),
+    ],
+  ),
+)
+```
+
+For multi-select, `validator` receives the selected `List<T>`:
+
+```dart
+CustomDropdown<City>.multi(
+  items: cities,
+  selectedItems: picked,
+  itemLabel: (c) => c.name,
+  validator: (list) =>
+      (list == null || list.isEmpty) ? 'Pick at least one' : null,
+  onSelectionChanged: (list) => setState(() => picked = list),
+)
+```
+
 ### Over your own model, with search and disabled items
 
 ```dart
@@ -232,6 +293,22 @@ CustomDropdown<City>(
   onChanged: (c) => ...,
 )
 ```
+
+## Keyboard & accessibility
+
+The open menu is fully keyboard-navigable (including while typing in the search
+box):
+
+| Key | Action |
+|---|---|
+| ↓ / ↑ | Move the highlight (skips group headers and disabled items) |
+| Enter | Select the highlighted item (multi-select toggles it) |
+| Esc | Close the menu |
+
+The highlight auto-scrolls into view, and opens on the currently selected item.
+The trigger and each item expose `Semantics` for screen readers — the trigger
+as a button with its expanded state and current label, and each row with its
+selected/checked and enabled state.
 
 ## Key parameters
 

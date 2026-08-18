@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'dropdown_direction.dart';
@@ -97,7 +98,16 @@ class CustomDropdown<T> extends StatefulWidget {
     this.emptyText = 'No results',
     this.emptyBuilder,
     this.leading,
-  }) : multiSelect = false,
+    this.clearable = false,
+    this.onCleared,
+    this.validator,
+    this.autovalidateMode = AutovalidateMode.disabled,
+  }) : assert(
+         !clearable || onCleared != null,
+         'When clearable is true, provide onCleared to reset your value '
+         '(e.g. set it to null).',
+       ),
+       multiSelect = false,
        errorBuilder = null,
        selectedItems = null,
        onSelectionChanged = null,
@@ -110,7 +120,8 @@ class CustomDropdown<T> extends StatefulWidget {
        debounce = const Duration(milliseconds: 300),
        errorText = 'Failed to load',
        retryText = 'Retry',
-       loading = const DropdownLoading.circular();
+       loading = const DropdownLoading.circular(),
+       validatorMulti = null;
 
   /// Creates a multi-select dropdown that shows a checkbox on each row and
   /// keeps the menu open while the user toggles items.
@@ -141,7 +152,11 @@ class CustomDropdown<T> extends StatefulWidget {
     this.emptyText = 'No results',
     this.emptyBuilder,
     this.leading,
+    FormFieldValidator<List<T>>? validator,
+    this.autovalidateMode = AutovalidateMode.disabled,
   }) : multiSelect = true,
+       validatorMulti = validator,
+       validator = null,
        errorBuilder = null,
        value = null,
        onChanged = null,
@@ -151,6 +166,8 @@ class CustomDropdown<T> extends StatefulWidget {
        errorText = 'Failed to load',
        retryText = 'Retry',
        loading = const DropdownLoading.circular(),
+       clearable = false,
+       onCleared = null,
        // A multi-select menu stays open while toggling.
        closeOnSelect = false;
 
@@ -197,7 +214,16 @@ class CustomDropdown<T> extends StatefulWidget {
     this.emptyBuilder,
     this.errorBuilder,
     this.leading,
-  }) : async = true,
+    this.clearable = false,
+    this.onCleared,
+    this.validator,
+    this.autovalidateMode = AutovalidateMode.disabled,
+  }) : assert(
+         !clearable || onCleared != null,
+         'When clearable is true, provide onCleared to reset your value '
+         '(e.g. set it to null).',
+       ),
+       async = true,
        items = const <Never>[],
        multiSelect = false,
        searchMatcher = null,
@@ -206,7 +232,8 @@ class CustomDropdown<T> extends StatefulWidget {
        selectedItemsLabel = null,
        showSelectAll = false,
        selectAllLabel = 'Select all',
-       clearAllLabel = 'Clear';
+       clearAllLabel = 'Clear',
+       validatorMulti = null;
 
   /// The list of selectable items. Empty for [CustomDropdown.async], where
   /// items come from [loader] instead.
@@ -337,6 +364,31 @@ class CustomDropdown<T> extends StatefulWidget {
   /// Optional widget shown at the start of the trigger (e.g. an icon).
   final Widget? leading;
 
+  /// Single-select: whether to show a clear (✕) button on the trigger while a
+  /// value is selected. Tapping it calls [onCleared]. Ignored for multi-select.
+  final bool clearable;
+
+  /// Single-select: called when the user taps the clear button. Reset your
+  /// selection here (typically set the value back to `null`). Required when
+  /// [clearable] is true.
+  final VoidCallback? onCleared;
+
+  /// Single-select / async: optional validator for use inside a [Form]. When
+  /// non-null, the dropdown registers as a [FormField]: [Form.validate] runs
+  /// it against the current [value], and a non-null return shows an error
+  /// message below the trigger and turns the field outline the theme's error
+  /// color. Non-null only for the default and async constructors.
+  final FormFieldValidator<T>? validator;
+
+  /// Multi-select: optional validator for use inside a [Form], validating the
+  /// current [selectedItems]. Set via the `validator` argument of
+  /// [CustomDropdown.multi].
+  final FormFieldValidator<List<T>>? validatorMulti;
+
+  /// When to automatically run [validator] / [validatorMulti]. Defaults to
+  /// [AutovalidateMode.disabled] (validate only on [Form.validate]).
+  final AutovalidateMode autovalidateMode;
+
   @override
   State<CustomDropdown<T>> createState() => _CustomDropdownState<T>();
 }
@@ -350,6 +402,14 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
 
   bool get _interactive =>
       widget.enabled && (widget.async || widget.items.isNotEmpty);
+
+  /// Whether to show the clear (✕) button: single-select, opted in, enabled,
+  /// and something is currently selected.
+  bool get _showClear =>
+      widget.clearable &&
+      widget.enabled &&
+      !widget.multiSelect &&
+      widget.value != null;
 
   @override
   void dispose() {
@@ -472,55 +532,152 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
         : (text: widget.hintText, isHint: true);
   }
 
+  /// Whether this dropdown participates in [Form] validation.
+  bool get _hasValidator =>
+      widget.multiSelect
+          ? widget.validatorMulti != null
+          : widget.validator != null;
+
+  /// The current selection as seen by the [FormField]: the picked value for
+  /// single-select, or the selected list for multi-select.
+  Object? get _formValue =>
+      widget.multiSelect
+          ? (widget.selectedItems ?? const <Never>[])
+          : widget.value;
+
+  /// Runs the appropriate validator against [value].
+  String? _runValidator(Object? value) {
+    if (widget.multiSelect) {
+      final List<T> list =
+          value is List<T> ? value : (value as List?)?.cast<T>() ?? <T>[];
+      return widget.validatorMulti?.call(list);
+    }
+    return widget.validator?.call(value as T?);
+  }
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final DropdownFieldStyle fs = widget.fieldStyle;
+
+    if (!_hasValidator) {
+      return _buildTrigger(theme, fs, hasError: false);
+    }
+
+    return FormField<Object?>(
+      initialValue: _formValue,
+      autovalidateMode: widget.autovalidateMode,
+      validator: _runValidator,
+      builder: (FormFieldState<Object?> state) {
+        // The selection is owned by the parent, so push external changes into
+        // the FormField (re-running validation) whenever the content differs.
+        if (!_selectionEquals(state.value, _formValue)) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) state.didChange(_formValue);
+          });
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            _buildTrigger(theme, fs, hasError: state.hasError),
+            if (state.hasError)
+              Padding(
+                padding: const EdgeInsets.only(top: 6, left: 12, right: 12),
+                child: Text(
+                  state.errorText!,
+                  style: (theme.textTheme.bodySmall ?? const TextStyle())
+                      .copyWith(color: theme.colorScheme.error),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Content equality for a selection value (list-aware for multi-select).
+  bool _selectionEquals(Object? a, Object? b) {
+    if (a is List && b is List) return listEquals<Object?>(a, b);
+    return a == b;
+  }
+
+  Widget _buildTrigger(
+    ThemeData theme,
+    DropdownFieldStyle fs, {
+    required bool hasError,
+  }) {
     final ({String text, bool isHint}) label = _triggerLabel();
 
     return CompositedTransformTarget(
       link: _link,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: fs.borderRadius,
-          onTap: _interactive ? _toggle : null,
-          child: Container(
-            padding: fs.padding,
-            decoration: BoxDecoration(
-              borderRadius: fs.borderRadius,
-              border: Border.all(
-                color: fs.borderColor ?? theme.dividerColor,
-                width: fs.borderWidth,
+      child: Semantics(
+        container: true,
+        button: true,
+        enabled: _interactive,
+        expanded: _isOpen,
+        label: label.text,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: fs.borderRadius,
+            onTap: _interactive ? _toggle : null,
+            child: Container(
+              padding: fs.padding,
+              decoration: BoxDecoration(
+                borderRadius: fs.borderRadius,
+                border: Border.all(
+                  color:
+                      hasError
+                          ? theme.colorScheme.error
+                          : (fs.borderColor ?? theme.dividerColor),
+                  width: fs.borderWidth,
+                ),
+                color: fs.backgroundColor,
               ),
-              color: fs.backgroundColor,
-            ),
-            child: Row(
-              children: <Widget>[
-                if (widget.leading != null) ...<Widget>[
-                  widget.leading!,
+              child: Row(
+                children: <Widget>[
+                  if (widget.leading != null) ...<Widget>[
+                    widget.leading!,
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Text(
+                      label.text,
+                      overflow: TextOverflow.ellipsis,
+                      style: _triggerTextStyle(theme, fs, label.isHint),
+                    ),
+                  ),
+                  if (_showClear) ...<Widget>[
+                    const SizedBox(width: 4),
+                    Semantics(
+                      button: true,
+                      label: 'Clear',
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: widget.onCleared,
+                        child: Icon(
+                          Icons.close,
+                          size: 18,
+                          color: fs.iconColor ?? theme.iconTheme.color,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(width: 8),
+                  AnimatedRotation(
+                    turns: _isOpen ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      color:
+                          !widget.enabled
+                              ? theme.disabledColor
+                              : (fs.iconColor ?? theme.iconTheme.color),
+                    ),
+                  ),
                 ],
-                Expanded(
-                  child: Text(
-                    label.text,
-                    overflow: TextOverflow.ellipsis,
-                    style: _triggerTextStyle(theme, fs, label.isHint),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                AnimatedRotation(
-                  turns: _isOpen ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 180),
-                  child: Icon(
-                    Icons.keyboard_arrow_down,
-                    color:
-                        !widget.enabled
-                            ? theme.disabledColor
-                            : (fs.iconColor ?? theme.iconTheme.color),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),

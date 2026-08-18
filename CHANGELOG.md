@@ -1,3 +1,20 @@
+## 0.5.0
+
+- Add a clearable single-select: set `clearable: true` to show a ✕ button on
+  the trigger while a value is selected. Tapping it calls the new `onCleared`
+  callback, where you reset your value (typically to `null`). Available on the
+  default and `CustomDropdown.async` constructors; backward-compatible (opt-in).
+- Add `Form` integration: pass a `validator` (and optional `autovalidateMode`)
+  to make the dropdown a `FormField`. On a failed validation it shows the error
+  message below the trigger and turns the field outline the theme's error color.
+  Works with `Form.validate()`/`save()`. Available on all three constructors
+  (`validator` validates `T?` for single/async and `List<T>` for `.multi`).
+- Keyboard navigation and accessibility: the open menu responds to ↑/↓ (moving
+  the highlight, skipping headers and disabled items), Enter (select), and Esc
+  (close) — including while the search box has focus — and auto-scrolls the
+  highlight into view. Added `Semantics` to the trigger (button, expanded state,
+  current label) and to each item (selected/checked, enabled, label).
+
 ## 0.4.0
 
 - Granular, independent styling split into three groups, replacing the old

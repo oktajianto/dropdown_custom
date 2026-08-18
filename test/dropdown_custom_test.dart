@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:dropdown_custom/dropdown_custom.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Widget _wrap(Widget child) =>
@@ -137,6 +138,78 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Apple'), findsNothing);
+    });
+
+    testWidgets('clear button appears only when a value is selected', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            items: const <String>['Apple', 'Mango'],
+            clearable: true,
+            onChanged: (_) {},
+            onCleared: () {},
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.close), findsNothing);
+
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            items: const <String>['Apple', 'Mango'],
+            value: 'Apple',
+            clearable: true,
+            onChanged: (_) {},
+            onCleared: () {},
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.close), findsOneWidget);
+    });
+
+    testWidgets('tapping clear fires onCleared without opening the menu', (
+      tester,
+    ) async {
+      bool cleared = false;
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            items: const <String>['Apple', 'Mango'],
+            value: 'Apple',
+            clearable: true,
+            onChanged: (_) {},
+            onCleared: () => cleared = true,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      expect(cleared, isTrue);
+      // The clear tap must not toggle the menu open.
+      expect(find.text('Mango'), findsNothing);
+    });
+
+    testWidgets('clear button is hidden when disabled', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            items: const <String>['Apple', 'Mango'],
+            value: 'Apple',
+            enabled: false,
+            clearable: true,
+            onChanged: (_) {},
+            onCleared: () {},
+          ),
+        ),
+      );
+
+      expect(find.byIcon(Icons.close), findsNothing);
     });
   });
 
@@ -539,6 +612,221 @@ void main() {
 
       // Initial '' plus a single debounced 'abc' — not one call per keystroke.
       expect(queries, <String>['', 'abc']);
+    });
+  });
+
+  group('CustomDropdown form validation', () {
+    testWidgets('Form.validate shows the error message and returns false', (
+      tester,
+    ) async {
+      final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+      await tester.pumpWidget(
+        _wrap(
+          Form(
+            key: formKey,
+            child: CustomDropdown<String>(
+              items: const <String>['Apple', 'Mango'],
+              value: null,
+              hintText: 'Pick',
+              validator: (String? v) => v == null ? 'Required' : null,
+              onChanged: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Required'), findsNothing);
+
+      final bool valid = formKey.currentState!.validate();
+      await tester.pump();
+
+      expect(valid, isFalse);
+      expect(find.text('Required'), findsOneWidget);
+    });
+
+    testWidgets('outline turns error color when invalid', (tester) async {
+      final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+      await tester.pumpWidget(
+        _wrap(
+          Form(
+            key: formKey,
+            child: CustomDropdown<String>(
+              items: const <String>['Apple', 'Mango'],
+              validator: (String? v) => v == null ? 'Required' : null,
+              onChanged: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      Border borderOf() {
+        final Container container = tester.widget<Container>(
+          find
+              .descendant(
+                of: find.byType(CustomDropdown<String>),
+                matching: find.byType(Container),
+              )
+              .first,
+        );
+        return (container.decoration! as BoxDecoration).border! as Border;
+      }
+
+      final Color errorColor =
+          Theme.of(
+            tester.element(find.byType(CustomDropdown<String>)),
+          ).colorScheme.error;
+
+      expect(borderOf().top.color, isNot(errorColor));
+
+      formKey.currentState!.validate();
+      await tester.pump();
+
+      expect(borderOf().top.color, errorColor);
+    });
+
+    testWidgets('valid selection passes and shows no error', (tester) async {
+      final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+      await tester.pumpWidget(
+        _wrap(
+          Form(
+            key: formKey,
+            child: CustomDropdown<String>(
+              items: const <String>['Apple', 'Mango'],
+              value: 'Apple',
+              validator: (String? v) => v == null ? 'Required' : null,
+              onChanged: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      final bool valid = formKey.currentState!.validate();
+      await tester.pump();
+
+      expect(valid, isTrue);
+      expect(find.text('Required'), findsNothing);
+    });
+
+    testWidgets('multi-select validator sees the selected list', (
+      tester,
+    ) async {
+      final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+      await tester.pumpWidget(
+        _wrap(
+          Form(
+            key: formKey,
+            child: CustomDropdown<String>.multi(
+              items: const <String>['Apple', 'Mango'],
+              selectedItems: const <String>[],
+              validator:
+                  (List<String>? v) =>
+                      (v == null || v.isEmpty) ? 'Pick at least one' : null,
+              onSelectionChanged: (_) {},
+            ),
+          ),
+        ),
+      );
+
+      expect(formKey.currentState!.validate(), isFalse);
+      await tester.pump();
+      expect(find.text('Pick at least one'), findsOneWidget);
+    });
+  });
+
+  group('CustomDropdown keyboard navigation', () {
+    testWidgets('arrow down + Enter selects an item', (tester) async {
+      String? picked;
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            items: const <String>['Apple', 'Mango', 'Orange'],
+            onChanged: (String v) => picked = v,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      // No item selected yet, so first ArrowDown highlights the first item.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(picked, 'Mango');
+    });
+
+    testWidgets('Enter skips disabled items while navigating', (tester) async {
+      String? picked;
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            items: const <String>['Apple', 'Mango', 'Orange'],
+            isItemEnabled: (String v) => v != 'Mango',
+            onChanged: (String v) => picked = v,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      // Apple (first), then skip disabled Mango, landing on Orange.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(picked, 'Orange');
+    });
+
+    testWidgets('arrows work while the search box has focus', (tester) async {
+      String? picked;
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            items: const <String>['Apple', 'Mango', 'Orange'],
+            enableSearch: true,
+            onChanged: (String v) => picked = v,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      // Focus is in the search TextField; arrow keys must still navigate.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(picked, 'Apple');
+    });
+
+    testWidgets('Escape closes the menu', (tester) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            items: const <String>['Apple', 'Mango'],
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+      expect(find.text('Mango'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mango'), findsNothing);
     });
   });
 }

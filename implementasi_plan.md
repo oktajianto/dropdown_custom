@@ -100,13 +100,51 @@ test/
 ### Fase 4 — Polish & rilis pub.dev
 
 - [x] Dokumentasi lengkap + dartdoc pada API publik
-- [x] `README.md` dengan contoh kode lengkap (GIF/screenshot opsional, menyusul)
+- [x] `README.md` dengan contoh kode lengkap + badge (flutter/dart/platform/
+      license/pub/likes/points/stars) + GIF preview (`screenshots/example-1.gif`)
 - [x] `CHANGELOG.md`, `LICENSE` (MIT)
 - [x] Repo GitHub publik + field `repository`/`homepage` di pubspec
 - [x] `topics` di pubspec + constraint SDK/Flutter yang benar
 - [x] Archive ramping (26 KB) — `example/build` dikecualikan via `.pubignore`
 - [x] `dart pub publish --dry-run` bersih (0 warning saat git clean)
 - [x] **Publish**
+
+### Fase 5 — Fitur lanjutan pasca-rilis (SEDANG DIKERJAKAN)
+
+Fitur tambahan setelah v0.4.0 rilis. Semua opsional & backward-compatible.
+Diurutkan dari nilai tertinggi.
+
+**Prioritas tinggi**
+
+- [x] **Clearable single-select** (v0.5.0) — `clearable: true` menampilkan tombol
+      ✕ di trigger saat ada value; menghapus lewat callback `onCleared` (karena
+      `onChanged` mengembalikan `T` non-null). Tersedia di konstruktor default &
+      `.async`. Sudah ada test, contoh, README, CHANGELOG.
+- [x] **Integrasi Form / validasi** (v0.5.0) — `validator` + `autovalidateMode`
+      di ketiga konstruktor; dropdown jadi `FormField` (ikut `Form.validate()`/
+      `save()`). Saat gagal: pesan error tampil di bawah trigger **dan outline
+      jadi merah** (`colorScheme.error`). Single/async memvalidasi `T?`, `.multi`
+      memvalidasi `List<T>`. Sudah ada test, contoh (section 8), README, CHANGELOG.
+- [x] **Keyboard navigation + accessibility** (v0.5.0) — panah ↑↓ pindah
+      highlight (lewati header & item disabled), Enter pilih, Esc tutup; jalan
+      juga saat fokus di search box (handler di `FocusNode.onKeyEvent` leaf,
+      mendahului text-editing). Highlight auto-scroll & mulai dari item terpilih.
+      `Semantics` pada trigger (button + expanded + label) dan tiap item
+      (selected/checked + enabled + label). Sudah ada test.
+
+**Prioritas menengah**
+
+- [ ] **Chips untuk multi-select** — tampilkan chip yang bisa dihapus per item di
+      trigger (ganti teks "A, B, C").
+- [ ] **DropdownController** — `open()`/`close()`/`select()`/`isOpen` programatik.
+- [ ] **Batas maksimal pilihan (multi-select)** — `maxSelection: n`, nonaktifkan
+      sisanya saat batas tercapai.
+
+**Prioritas rendah (nice-to-have)**
+
+- [ ] **Animasi buka/tutup menu** (fade/scale/slide).
+- [ ] **Infinite scroll / pagination** untuk `.async` list besar.
+- [ ] **Opsi "tambah baru"** (tags style) — masukkan nilai di luar list.
 
 ## Keputusan yang Sudah Diambil
 

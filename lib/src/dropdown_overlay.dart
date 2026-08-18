@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'custom_dropdown.dart';
 import 'dropdown_direction.dart';
@@ -183,16 +184,53 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   Timer? _debounce;
   int _requestId = 0;
 
+  // Keyboard navigation state.
+  final ScrollController _scroll = ScrollController();
+
+  /// Handles arrow/Enter/Escape keys when there is no search box (this node is
+  /// the primary focus). Assigned in [initState] so it can reference [_handleKey].
+  late final FocusNode _menuFocus;
+
+  /// The search field's own focus node. Its [_handleKey] handler runs at the
+  /// leaf, ahead of the text field's built-in arrow-key handling.
+  late final FocusNode _searchFocus;
+
+  /// The rows currently laid out, kept so the key handler can navigate them.
+  List<_Row<T>> _rows = <_Row<T>>[];
+
+  /// Index into [_rows] of the keyboard-highlighted item, or -1 for none.
+  int _activeIndex = -1;
+
+  /// Whether the initial highlight (the selected item) has been applied.
+  bool _initHighlight = false;
+
+  /// Set when the highlight moves by keyboard so the next frame scrolls it in.
+  bool _scrollToActive = false;
+
+  /// Marks the currently highlighted row so it can be scrolled into view.
+  final GlobalKey _activeRowKey = GlobalKey();
+
   @override
   void initState() {
     super.initState();
     _selected = List<T>.of(widget.initialSelected);
+    _menuFocus = FocusNode(debugLabel: 'dropdownMenu', onKeyEvent: _handleKey);
+    _searchFocus = FocusNode(
+      debugLabel: 'dropdownSearch',
+      onKeyEvent: _handleKey,
+    );
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 160),
     )..forward();
     _anim = CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic);
     if (widget.async) _load(_query);
+    // Claim focus so arrow/Enter/Escape reach the right handler: the search
+    // field when present, otherwise the menu node.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      (widget.enableSearch ? _searchFocus : _menuFocus).requestFocus();
+    });
   }
 
   bool _isSelected(T item) =>
@@ -241,7 +279,85 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   void dispose() {
     _debounce?.cancel();
     _controller.dispose();
+    _scroll.dispose();
+    _menuFocus.dispose();
+    _searchFocus.dispose();
     super.dispose();
+  }
+
+  // --- Keyboard navigation ---------------------------------------------------
+
+  /// Indices in [_rows] that can hold the highlight: item rows that are enabled.
+  List<int> _navigableIndices() {
+    final List<int> out = <int>[];
+    for (int i = 0; i < _rows.length; i++) {
+      final _Row<T> r = _rows[i];
+      if (!r.isHeader && _isEnabled(r.item as T)) out.add(i);
+    }
+    return out;
+  }
+
+  /// Row index of the currently selected item (single-select), or -1.
+  int _indexOfSelected() {
+    if (widget.multiSelect) return -1;
+    for (int i = 0; i < _rows.length; i++) {
+      final _Row<T> r = _rows[i];
+      if (!r.isHeader && r.item == widget.value) return i;
+    }
+    return -1;
+  }
+
+  /// Moves the highlight to the next navigable row in [dir] (+1 down, -1 up).
+  void _moveHighlight(int dir) {
+    final List<int> nav = _navigableIndices();
+    if (nav.isEmpty) return;
+    int pos;
+    if (_activeIndex < 0 || !nav.contains(_activeIndex)) {
+      pos = dir > 0 ? 0 : nav.length - 1;
+    } else {
+      pos = (nav.indexOf(_activeIndex) + dir).clamp(0, nav.length - 1);
+    }
+    setState(() {
+      _activeIndex = nav[pos];
+      _scrollToActive = true;
+    });
+  }
+
+  /// Selects the highlighted item, if any.
+  void _activateHighlighted() {
+    if (_activeIndex < 0 || _activeIndex >= _rows.length) return;
+    final _Row<T> row = _rows[_activeIndex];
+    if (row.isHeader) return;
+    final T item = row.item as T;
+    if (_isEnabled(item)) _onItemTap(item);
+  }
+
+  /// Handles arrow/Enter/Escape keys. Attached to both the menu focus node and
+  /// the search field's node, so it runs ahead of the text field's own arrow
+  /// handling (which would otherwise move the caret instead of the highlight).
+  KeyEventResult _handleKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final LogicalKeyboardKey key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowDown) {
+      _moveHighlight(1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowUp) {
+      _moveHighlight(-1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter) {
+      _activateHighlighted();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.escape) {
+      widget.onDismiss();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   /// Runs [DropdownOverlay.loader] for [query]. A per-call [_requestId] guards
@@ -269,7 +385,13 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   }
 
   void _onSearchChanged(String value) {
-    setState(() => _query = value);
+    setState(() {
+      _query = value;
+      // The filtered list changes, so drop the highlight; it re-initializes to
+      // the first match on the next build.
+      _activeIndex = -1;
+      _initHighlight = false;
+    });
     if (!widget.async) return;
     _debounce?.cancel();
     _debounce = Timer(widget.debounce, () => _load(value));
@@ -407,43 +529,76 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
   }
 
   Widget _buildMenu(ThemeData theme, DropdownMenuStyle deco) {
-    final List<_Row<T>> rows = _buildRows();
+    _rows = _buildRows();
+
+    // Initialize the highlight to the selected item (or first match after a
+    // search), then keep it valid if the row layout changed underneath it.
+    if (!_initHighlight) {
+      _initHighlight = true;
+      final int selected = _indexOfSelected();
+      final List<int> nav = _navigableIndices();
+      _activeIndex =
+          selected >= 0
+              ? selected
+              : (nav.isNotEmpty && _query.isNotEmpty ? nav.first : -1);
+    } else if (_activeIndex >= _rows.length ||
+        (_activeIndex >= 0 && _rows[_activeIndex].isHeader)) {
+      _activeIndex = -1;
+    }
+
+    // After layout, bring a keyboard-moved highlight into view.
+    if (_scrollToActive) {
+      _scrollToActive = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final BuildContext? ctx = _activeRowKey.currentContext;
+        if (ctx != null) {
+          Scrollable.ensureVisible(
+            ctx,
+            alignment: 0.5,
+            duration: const Duration(milliseconds: 120),
+          );
+        }
+      });
+    }
 
     return Material(
       color: Colors.transparent,
-      child: Container(
-        width: _menuWidth,
-        constraints: BoxConstraints(maxHeight: deco.maxHeight),
-        decoration: BoxDecoration(
-          color: deco.backgroundColor ?? theme.colorScheme.surface,
-          borderRadius: deco.borderRadius,
-          border:
-              deco.borderColor != null
-                  ? Border.all(
-                    color: deco.borderColor!,
-                    width: deco.borderWidth,
-                  )
-                  : null,
-          boxShadow:
-              deco.elevation > 0
-                  ? <BoxShadow>[
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.15),
-                      blurRadius: deco.elevation * 2,
-                      offset: Offset(0, deco.elevation / 2),
-                    ),
-                  ]
-                  : null,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            if (widget.enableSearch) _buildSearchField(theme),
-            if (widget.multiSelect && widget.showSelectAll)
-              _buildSelectAllRow(theme),
-            Flexible(child: _buildBody(theme, deco, rows)),
-          ],
+      child: Focus(
+        focusNode: _menuFocus,
+        child: Container(
+          width: _menuWidth,
+          constraints: BoxConstraints(maxHeight: deco.maxHeight),
+          decoration: BoxDecoration(
+            color: deco.backgroundColor ?? theme.colorScheme.surface,
+            borderRadius: deco.borderRadius,
+            border:
+                deco.borderColor != null
+                    ? Border.all(
+                      color: deco.borderColor!,
+                      width: deco.borderWidth,
+                    )
+                    : null,
+            boxShadow:
+                deco.elevation > 0
+                    ? <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: deco.elevation * 2,
+                        offset: Offset(0, deco.elevation / 2),
+                      ),
+                    ]
+                    : null,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              if (widget.enableSearch) _buildSearchField(theme),
+              if (widget.multiSelect && widget.showSelectAll)
+                _buildSelectAllRow(theme),
+              Flexible(child: _buildBody(theme, deco, _rows)),
+            ],
+          ),
         ),
       ),
     );
@@ -462,10 +617,12 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     }
     if (rows.isEmpty) return _buildEmpty(theme);
     return ListView.builder(
+      controller: _scroll,
       padding: deco.menuPadding,
       shrinkWrap: true,
       itemCount: rows.length,
-      itemBuilder: (context, index) => _buildRow(theme, deco, rows[index]),
+      itemBuilder:
+          (context, index) => _buildRow(theme, deco, rows[index], index),
     );
   }
 
@@ -580,6 +737,7 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
       child: TextField(
+        focusNode: _searchFocus,
         autofocus: true,
         onChanged: _onSearchChanged,
         style: ss.textStyle,
@@ -623,19 +781,27 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     );
   }
 
-  Widget _buildRow(ThemeData theme, DropdownMenuStyle deco, _Row<T> row) {
+  Widget _buildRow(
+    ThemeData theme,
+    DropdownMenuStyle deco,
+    _Row<T> row,
+    int index,
+  ) {
     if (row.isHeader) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-        child: Text(
-          row.header!,
-          style:
-              deco.groupHeaderStyle ??
-              theme.textTheme.labelSmall?.copyWith(
-                color: theme.hintColor,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.5,
-              ),
+      return Semantics(
+        header: true,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Text(
+            row.header!,
+            style:
+                deco.groupHeaderStyle ??
+                theme.textTheme.labelSmall?.copyWith(
+                  color: theme.hintColor,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+          ),
         ),
       );
     }
@@ -643,25 +809,38 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     final T item = row.item as T;
     final bool isSelected = _isSelected(item);
     final bool isEnabled = widget.isItemEnabled?.call(item) ?? true;
+    final bool isActive = index == _activeIndex;
 
     final Widget content =
         widget.itemBuilder != null
             ? widget.itemBuilder!(context, item, isSelected, isEnabled)
             : _defaultRowContent(theme, deco, item, isSelected, isEnabled);
 
-    return _HoverableRow(
+    return Semantics(
+      // Anchors Scrollable.ensureVisible for keyboard navigation.
+      key: isActive ? _activeRowKey : null,
+      container: true,
+      button: true,
       enabled: isEnabled,
-      // In multi-select a checkbox already signals state, so don't also tint
-      // the whole row background for selection.
-      selected: isSelected && !widget.multiSelect,
-      highlightColor:
-          deco.highlightColor ??
-          theme.colorScheme.primary.withValues(alpha: 0.08),
-      selectedColor:
-          deco.selectedColor ??
-          theme.colorScheme.primary.withValues(alpha: 0.12),
-      onTap: isEnabled ? () => _onItemTap(item) : null,
-      child: content,
+      // Single-select rows read as "selected"; multi-select rows as a checkbox.
+      selected: widget.multiSelect ? null : isSelected,
+      checked: widget.multiSelect ? isSelected : null,
+      label: widget.labelFor(item),
+      child: _HoverableRow(
+        enabled: isEnabled,
+        // In multi-select a checkbox already signals state, so don't also tint
+        // the whole row background for selection.
+        selected: isSelected && !widget.multiSelect,
+        highlighted: isActive,
+        highlightColor:
+            deco.highlightColor ??
+            theme.colorScheme.primary.withValues(alpha: 0.08),
+        selectedColor:
+            deco.selectedColor ??
+            theme.colorScheme.primary.withValues(alpha: 0.12),
+        onTap: isEnabled ? () => _onItemTap(item) : null,
+        child: content,
+      ),
     );
   }
 
@@ -720,6 +899,7 @@ class _HoverableRow extends StatefulWidget {
     required this.child,
     required this.enabled,
     required this.selected,
+    required this.highlighted,
     required this.highlightColor,
     required this.selectedColor,
     required this.onTap,
@@ -728,6 +908,9 @@ class _HoverableRow extends StatefulWidget {
   final Widget child;
   final bool enabled;
   final bool selected;
+
+  /// Whether the row is highlighted by keyboard navigation (painted like hover).
+  final bool highlighted;
   final Color highlightColor;
   final Color selectedColor;
   final VoidCallback? onTap;
@@ -744,7 +927,7 @@ class _HoverableRowState extends State<_HoverableRow> {
     Color? background;
     if (widget.selected) {
       background = widget.selectedColor;
-    } else if (_hovering && widget.enabled) {
+    } else if ((_hovering || widget.highlighted) && widget.enabled) {
       background = widget.highlightColor;
     }
 
