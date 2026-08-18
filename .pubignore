@@ -1,0 +1,5 @@
+# Keep the published archive lean. The README references screenshots via
+# absolute raw.githubusercontent.com URLs, so they render on pub.dev without
+# shipping the (large) image files inside the package archive.
+screenshots/
+implementasi_plan.md

@@ -1,5 +1,13 @@
 # dropdown_custom
 
+[![flutter](https://img.shields.io/badge/flutter-website-deepskyblue.svg)](https://flutter.dev)
+[![dart](https://img.shields.io/badge/dart-website-00B4AB.svg)](https://dart.dev)
+[![platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Mac%20%7C%20Linux%20%7C%20Windows-brightgreen.svg)](https://flutter.dev)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![pub](https://img.shields.io/pub/v/dropdown_custom.svg)](https://pub.dev/packages/dropdown_custom)
+[![pub points](https://img.shields.io/pub/points/dropdown_custom.svg)](https://pub.dev/packages/dropdown_custom/score)
+[![likes](https://img.shields.io/pub/likes/dropdown_custom.svg)](https://pub.dev/packages/dropdown_custom/score)
+[![stars](https://img.shields.io/github/stars/oktajianto/dropdown_custom.svg?style=social)](https://github.com/oktajianto/dropdown_custom)
 [![CI](https://github.com/oktajianto/dropdown_custom/actions/workflows/ci.yml/badge.svg)](https://github.com/oktajianto/dropdown_custom/actions/workflows/ci.yml)
 
 A customizable, **zero-dependency** dropdown for Flutter. Simple to set up, yet
@@ -23,13 +31,24 @@ the trigger. `dropdown_custom` focuses on:
   an optional parameter.
 - **No dependencies** — only the Flutter SDK.
 
+## Preview
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/example-1.gif" alt="dropdown_custom demo" width="360" />
+</p>
+
 ## Getting started
 
-Add it to your `pubspec.yaml`:
+Add it with a single command:
 
-```yaml
-dependencies:
-  dropdown_custom: ^0.1.0
+```bash
+flutter pub add dropdown_custom
+```
+
+Then import it:
+
+```dart
+import 'package:dropdown_custom/dropdown_custom.dart';
 ```
 
 ## Usage
