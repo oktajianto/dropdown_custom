@@ -11,8 +11,9 @@
 [![CI](https://github.com/oktajianto/dropdown_custom/actions/workflows/ci.yml/badge.svg)](https://github.com/oktajianto/dropdown_custom/actions/workflows/ci.yml)
 
 A customizable, **zero-dependency** dropdown for Flutter. Simple to set up, yet
-scales to real-world needs: search, grouping, per-item enable/disable, custom
-colors, and free positioning — **top, bottom, left, or right** with auto-flip.
+scales to real-world needs: **single or multiple selection**, search, grouping,
+per-item enable/disable, custom colors, and free positioning — **top, bottom,
+left, or right** with auto-flip.
 
 **Works on every Flutter platform:** Android · iOS · Web · Windows · macOS ·
 Linux. It is a pure-Dart package (no native code, no platform channels, no
@@ -23,6 +24,8 @@ third-party dependencies), so it runs anywhere Flutter runs.
 Flutter's built-in dropdown is limited, and most alternatives only open below
 the trigger. `dropdown_custom` focuses on:
 
+- **Single or multiple selection** — pick one value, or enable multi-select to
+  collect a `List<T>` with checkboxes.
 - **Free positioning** — open the menu on any side, with `auto` flipping when
   it would run off-screen.
 - **Type-safe generics** — items are a plain `List<T>`; no wrapper class
