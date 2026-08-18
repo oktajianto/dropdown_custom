@@ -184,6 +184,23 @@ CustomDropdown<City>.multi(
 )
 ```
 
+By default the trigger shows the selection as comma-joined text (customizable
+via `selectedItemsLabel`). Set `showChips: true` to show it as **removable
+chips** instead — each chip has a ✕ that removes just that item, without
+opening the menu:
+
+```dart
+CustomDropdown<City>.multi(
+  items: cities,
+  selectedItems: picked,
+  itemLabel: (c) => c.name,
+  showChips: true,
+  chipOverflow: ChipOverflow.wrap, // or ChipOverflow.scroll (single line)
+  chipStyle: const DropdownChipStyle(), // colors default from menuStyle/theme
+  onSelectionChanged: (list) => setState(() => picked = list),
+)
+```
+
 ### Async loading
 
 ```dart

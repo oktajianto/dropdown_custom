@@ -134,7 +134,7 @@ class _DemoPageState extends State<DemoPage> {
                 onChanged: (City c) => setState(() => _groupedCity = c),
               ),
 
-              _section('4. Multi-select + search + grouping'),
+              _section('4. Multi-select + search + grouping + chips'),
               CustomDropdown<City>.multi(
                 items: kCities,
                 selectedItems: _multiCities,
@@ -144,8 +144,8 @@ class _DemoPageState extends State<DemoPage> {
                 enableSearch: true,
                 showSelectAll: true,
                 hintText: 'Pick cities',
-                selectedItemsLabel: (List<City> s) =>
-                    '${s.length} selected: ${s.map((City c) => c.name).join(', ')}',
+                // Show the selection as removable chips (wrapping to new lines).
+                showChips: true,
                 onSelectionChanged: (List<City> list) =>
                     setState(() => _multiCities = list),
               ),

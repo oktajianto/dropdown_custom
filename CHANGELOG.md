@@ -14,6 +14,12 @@
   (close) — including while the search box has focus — and auto-scrolls the
   highlight into view. Added `Semantics` to the trigger (button, expanded state,
   current label) and to each item (selected/checked, enabled, label).
+- Multi-select chips: set `showChips: true` on `CustomDropdown.multi` to show
+  the selection as removable chips on the trigger (each with a ✕ that removes
+  just that item) instead of comma-joined text. `chipOverflow` chooses wrap
+  (default) or horizontal scroll; `chipStyle` (`DropdownChipStyle`) themes the
+  chips, defaulting to colors derived from `menuStyle`/theme. `selectedItemsLabel`
+  still applies when `showChips` is false.
 
 ## 0.4.0
 

@@ -134,8 +134,11 @@ Diurutkan dari nilai tertinggi.
 
 **Prioritas menengah**
 
-- [ ] **Chips untuk multi-select** — tampilkan chip yang bisa dihapus per item di
-      trigger (ganti teks "A, B, C").
+- [x] **Chips untuk multi-select** (v0.5.0) — `showChips: true` menampilkan chip
+      yang bisa dihapus per item (✕ per chip, tanpa buka menu). `chipOverflow`
+      pilih wrap (default) / scroll horizontal; `chipStyle` (`DropdownChipStyle`)
+      untuk warna (default turun dari `menuStyle`/tema). `selectedItemsLabel`
+      tetap dipakai saat `showChips: false`. Sudah ada test, contoh, README.
 - [ ] **DropdownController** — `open()`/`close()`/`select()`/`isOpen` programatik.
 - [ ] **Batas maksimal pilihan (multi-select)** — `maxSelection: n`, nonaktifkan
       sisanya saat batas tercapai.

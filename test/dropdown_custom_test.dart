@@ -419,6 +419,88 @@ void main() {
     });
   });
 
+  group('CustomDropdown chips (multi-select)', () {
+    testWidgets('renders a chip per selected item when showChips is on', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango', 'Orange'],
+            selectedItems: const <String>['Apple', 'Mango'],
+            showChips: true,
+            onSelectionChanged: (_) {},
+          ),
+        ),
+      );
+
+      // Two chips, each with a delete icon; not the comma-joined text.
+      expect(find.text('Apple'), findsOneWidget);
+      expect(find.text('Mango'), findsOneWidget);
+      expect(find.byIcon(Icons.close), findsNWidgets(2));
+      expect(find.text('Apple, Mango'), findsNothing);
+    });
+
+    testWidgets('tapping a chip ✕ removes just that item', (tester) async {
+      List<String>? changed;
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango', 'Orange'],
+            selectedItems: const <String>['Apple', 'Mango'],
+            showChips: true,
+            onSelectionChanged: (List<String> v) => changed = v,
+          ),
+        ),
+      );
+
+      // Remove the first chip (Apple) via its ✕.
+      await tester.tap(find.byIcon(Icons.close).first);
+      await tester.pumpAndSettle();
+
+      expect(changed, <String>['Mango']);
+      // The tap must not open the menu.
+      expect(find.text('Orange'), findsNothing);
+    });
+
+    testWidgets('shows the hint (no chips) when nothing is selected', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango'],
+            selectedItems: const <String>[],
+            showChips: true,
+            hintText: 'Pick some',
+            onSelectionChanged: (_) {},
+          ),
+        ),
+      );
+
+      expect(find.text('Pick some'), findsOneWidget);
+      expect(find.byIcon(Icons.close), findsNothing);
+    });
+
+    testWidgets('selectedItemsLabel is used when showChips is false', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango'],
+            selectedItems: const <String>['Apple', 'Mango'],
+            selectedItemsLabel: (List<String> s) => '${s.length} picked',
+            onSelectionChanged: (_) {},
+          ),
+        ),
+      );
+
+      expect(find.text('2 picked'), findsOneWidget);
+      expect(find.byIcon(Icons.close), findsNothing);
+    });
+  });
+
   group('CustomDropdown async', () {
     testWidgets('shows a spinner then the loaded items', (tester) async {
       final Completer<List<String>> completer = Completer<List<String>>();

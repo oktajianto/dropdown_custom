@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'dropdown_chip_style.dart';
 import 'dropdown_direction.dart';
 import 'dropdown_field_style.dart';
 import 'dropdown_loading.dart';
@@ -121,7 +122,10 @@ class CustomDropdown<T> extends StatefulWidget {
        errorText = 'Failed to load',
        retryText = 'Retry',
        loading = const DropdownLoading.circular(),
-       validatorMulti = null;
+       validatorMulti = null,
+       showChips = false,
+       chipOverflow = ChipOverflow.wrap,
+       chipStyle = const DropdownChipStyle();
 
   /// Creates a multi-select dropdown that shows a checkbox on each row and
   /// keeps the menu open while the user toggles items.
@@ -139,6 +143,9 @@ class CustomDropdown<T> extends StatefulWidget {
     this.searchMatcher,
     this.hintText = 'Select',
     this.selectedItemsLabel,
+    this.showChips = false,
+    this.chipOverflow = ChipOverflow.wrap,
+    this.chipStyle = const DropdownChipStyle(),
     this.showSelectAll = false,
     this.selectAllLabel = 'Select all',
     this.clearAllLabel = 'Clear',
@@ -233,7 +240,10 @@ class CustomDropdown<T> extends StatefulWidget {
        showSelectAll = false,
        selectAllLabel = 'Select all',
        clearAllLabel = 'Clear',
-       validatorMulti = null;
+       validatorMulti = null,
+       showChips = false,
+       chipOverflow = ChipOverflow.wrap,
+       chipStyle = const DropdownChipStyle();
 
   /// The list of selectable items. Empty for [CustomDropdown.async], where
   /// items come from [loader] instead.
@@ -278,8 +288,23 @@ class CustomDropdown<T> extends StatefulWidget {
   final List<T>? selectedItems;
 
   /// Multi-select: builds the trigger label from the current selection. When
-  /// `null`, the selected items' labels are joined with ", ".
+  /// `null`, the selected items' labels are joined with ", ". Ignored when
+  /// [showChips] is true.
   final String Function(List<T> selected)? selectedItemsLabel;
+
+  /// Multi-select: whether to show the selection as removable chips on the
+  /// trigger instead of a comma-joined text label. Each chip has a ✕ button
+  /// that removes just that item. Defaults to `false`.
+  final bool showChips;
+
+  /// Multi-select: how chips behave when they exceed the trigger width — wrap
+  /// onto new lines (default) or scroll horizontally on one line. Only used
+  /// when [showChips] is true.
+  final ChipOverflow chipOverflow;
+
+  /// Multi-select: styling for the chips (used when [showChips] is true).
+  /// Colors default to values derived from [menuStyle] and the theme.
+  final DropdownChipStyle chipStyle;
 
   /// Multi-select: whether to show "select all" / "clear" actions above the
   /// list. Defaults to `false`. Both actions operate on the items currently
@@ -410,6 +435,19 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
       widget.enabled &&
       !widget.multiSelect &&
       widget.value != null;
+
+  /// Whether to render the multi-select selection as chips on the trigger.
+  bool get _showChips =>
+      widget.multiSelect &&
+      widget.showChips &&
+      (widget.selectedItems?.isNotEmpty ?? false);
+
+  /// Removes [item] from the multi-select selection and reports the new list.
+  void _removeChip(T item) {
+    final List<T> next = List<T>.of(widget.selectedItems ?? const <Never>[])
+      ..remove(item);
+    widget.onSelectionChanged?.call(next);
+  }
 
   @override
   void dispose() {
@@ -642,11 +680,14 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
                     const SizedBox(width: 8),
                   ],
                   Expanded(
-                    child: Text(
-                      label.text,
-                      overflow: TextOverflow.ellipsis,
-                      style: _triggerTextStyle(theme, fs, label.isHint),
-                    ),
+                    child:
+                        _showChips
+                            ? _buildChips(theme)
+                            : Text(
+                              label.text,
+                              overflow: TextOverflow.ellipsis,
+                              style: _triggerTextStyle(theme, fs, label.isHint),
+                            ),
                   ),
                   if (_showClear) ...<Widget>[
                     const SizedBox(width: 4),
@@ -701,6 +742,80 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
     if (explicit != null) return explicit;
     return theme.textTheme.bodyMedium?.copyWith(
       color: isHint ? theme.hintColor : null,
+    );
+  }
+
+  /// Builds the multi-select chips row, wrapping or scrolling per [chipOverflow].
+  Widget _buildChips(ThemeData theme) {
+    final List<T> items = widget.selectedItems ?? const <Never>[];
+    final DropdownChipStyle cs = widget.chipStyle;
+    final List<Widget> chips = <Widget>[
+      for (final T item in items) _chip(theme, cs, item),
+    ];
+
+    if (widget.chipOverflow == ChipOverflow.scroll) {
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            for (int i = 0; i < chips.length; i++) ...<Widget>[
+              if (i > 0) SizedBox(width: cs.spacing),
+              chips[i],
+            ],
+          ],
+        ),
+      );
+    }
+    return Wrap(spacing: cs.spacing, runSpacing: cs.spacing, children: chips);
+  }
+
+  /// A single removable chip for [item].
+  Widget _chip(ThemeData theme, DropdownChipStyle cs, T item) {
+    final Color background =
+        cs.backgroundColor ??
+        widget.menuStyle.selectedColor ??
+        theme.colorScheme.primary.withValues(alpha: 0.12);
+    final TextStyle labelStyle =
+        cs.textStyle ??
+        (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
+          fontSize: 13,
+        );
+    final Color iconColor =
+        cs.deleteIconColor ?? labelStyle.color ?? theme.colorScheme.onSurface;
+
+    return Container(
+      padding: cs.padding,
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: cs.borderRadius,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Flexible(
+            child: Text(
+              _labelFor(item),
+              overflow: TextOverflow.ellipsis,
+              style: labelStyle,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Semantics(
+            button: true,
+            label: 'Remove ${_labelFor(item)}',
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: widget.enabled ? () => _removeChip(item) : null,
+              child: Icon(
+                Icons.close,
+                size: cs.deleteIconSize,
+                color: iconColor,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
