@@ -1,5 +1,7 @@
-import 'package:dropdown_custom/dropdown_custom.dart';
 import 'package:flutter/material.dart';
+
+import 'all_features_page.dart';
+import 'demos.dart';
 
 void main() => runApp(const DemoApp());
 
@@ -14,244 +16,84 @@ class DemoApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
       ),
-      home: const DemoPage(),
+      home: const HomePage(),
     );
   }
 }
 
-/// A simple model to demonstrate that the dropdown works over any type [T],
-/// not just [String].
-class City {
-  const City(this.name, this.province, {this.available = true});
-
-  final String name;
-  final String province;
-  final bool available;
+/// A single demo entry in the home menu.
+class _Demo {
+  const _Demo(this.title, this.subtitle, this.builder);
+  final String title;
+  final String subtitle;
+  final WidgetBuilder builder;
 }
 
-const List<City> kCities = <City>[
-  City('Jakarta', 'DKI Jakarta'),
-  City('Bandung', 'Jawa Barat'),
-  City('Bekasi', 'Jawa Barat'),
-  City('Surabaya', 'Jawa Timur'),
-  City('Malang', 'Jawa Timur', available: false),
-  City('Semarang', 'Jawa Tengah'),
-  City('Solo', 'Jawa Tengah'),
-  City('Denpasar', 'Bali'),
-  City('Medan', 'Sumatera Utara', available: false),
-  City('Makassar', 'Sulawesi Selatan'),
-];
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
-class DemoPage extends StatefulWidget {
-  const DemoPage({super.key});
-
-  @override
-  State<DemoPage> createState() => _DemoPageState();
-}
-
-class _DemoPageState extends State<DemoPage> {
-  String? _fruit;
-  City? _city;
-  City? _groupedCity;
-  City? _sideCity;
-  City? _asyncCity;
-  List<City> _multiCities = <City>[];
-  City? _formCity;
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  City? _controlledCity;
-  final DropdownController _dropdownController = DropdownController();
-
-  @override
-  void dispose() {
-    _dropdownController.dispose();
-    super.dispose();
-  }
-
-  /// Fake network search: filters [kCities] by [query] after a short delay.
-  Future<List<City>> _searchCities(String query) async {
-    await Future<void>.delayed(const Duration(milliseconds: 600));
-    final String q = query.toLowerCase();
-    return kCities.where((City c) => c.name.toLowerCase().contains(q)).toList();
-  }
+  static final List<_Demo> _demos = <_Demo>[
+    _Demo(
+      'All features (one page)',
+      'Everything stacked together',
+      (_) => const AllFeaturesPage(),
+    ),
+    _Demo('Simplest', 'items + onChanged', (_) => const SimplestDemo()),
+    _Demo('Clearable', '✕ button to reset', (_) => const ClearableDemo()),
+    _Demo(
+      'Search + disabled',
+      'Filter + per-item enable/disable',
+      (_) => const SearchDisabledDemo(),
+    ),
+    _Demo('Grouped', 'Group headers', (_) => const GroupedDemo()),
+    _Demo(
+      'Form validation',
+      'validator + red outline',
+      (_) => const FormValidationDemo(),
+    ),
+    _Demo(
+      'Multi-select',
+      'Checkboxes + select all',
+      (_) => const MultiSelectDemo(),
+    ),
+    _Demo('Chips', 'Removable chips', (_) => const ChipsDemo()),
+    _Demo('Max selection', 'Cap the count', (_) => const MaxSelectionDemo()),
+    _Demo('Async loading', 'Remote + shimmer', (_) => const AsyncDemo()),
+    _Demo('Positioning', 'Opens to the right', (_) => const PositioningDemo()),
+    _Demo('Styling', 'Field / menu / search', (_) => const StylingDemo()),
+    _Demo('Keyboard & a11y', '↑/↓, Enter, Esc', (_) => const KeyboardDemo()),
+    _Demo(
+      'DropdownController',
+      'Open/close programmatically',
+      (_) => const ControllerDemo(),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('dropdown_custom')),
+      appBar: AppBar(title: const Text('dropdown_custom examples')),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: ListView(
-            padding: const EdgeInsets.all(24),
-            children: <Widget>[
-              _section('1. Simplest — List<String> (clearable)'),
-              CustomDropdown<String>(
-                items: const <String>['Apple', 'Mango', 'Orange', 'Banana'],
-                value: _fruit,
-                hintText: 'Pick a fruit',
-                clearable: true,
-                onChanged: (String v) => setState(() => _fruit = v),
-                onCleared: () => setState(() => _fruit = null),
-              ),
-
-              _section('2. Model + search + disabled items'),
-              CustomDropdown<City>(
-                items: kCities,
-                value: _city,
-                itemLabel: (City c) => c.name,
-                isItemEnabled: (City c) => c.available,
-                enableSearch: true,
-                searchHint: 'Search city…',
-                hintText: 'Pick a city',
-                onChanged: (City c) => setState(() => _city = c),
-              ),
-
-              _section('3. Grouped + granular field/menu/search styling'),
-              CustomDropdown<City>(
-                items: kCities,
-                value: _groupedCity,
-                itemLabel: (City c) => c.name,
-                groupBy: (City c) => c.province,
-                enableSearch: true,
-                hintText: 'Pick a city (grouped)',
-                // INPUT field styling.
-                fieldStyle: DropdownFieldStyle(
-                  backgroundColor: Colors.teal.shade50,
-                  borderColor: Colors.teal,
-                  borderWidth: 1.5,
-                  textStyle: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                // MENU box styling.
-                menuStyle: DropdownMenuStyle(
-                  backgroundColor: Colors.teal.shade50,
-                  borderColor: Colors.teal.shade200,
-                  highlightColor: Colors.teal.withValues(alpha: 0.12),
-                  selectedColor: Colors.teal.withValues(alpha: 0.22),
-                  itemTextStyle: const TextStyle(fontSize: 14),
-                ),
-                // SEARCH bar styling.
-                searchStyle: DropdownSearchStyle(
-                  fillColor: Colors.white,
-                  borderColor: Colors.teal.shade200,
-                  focusedBorderColor: Colors.teal,
-                  hintStyle: TextStyle(color: Colors.teal.shade300),
-                ),
-                onChanged: (City c) => setState(() => _groupedCity = c),
-              ),
-
-              _section('4. Multi-select + chips + max 3'),
-              CustomDropdown<City>.multi(
-                items: kCities,
-                selectedItems: _multiCities,
-                itemLabel: (City c) => c.name,
-                groupBy: (City c) => c.province,
-                isItemEnabled: (City c) => c.available,
-                enableSearch: true,
-                showSelectAll: true,
-                hintText: 'Pick up to 3 cities',
-                // Show the selection as removable chips (wrapping to new lines).
-                showChips: true,
-                // Disable unselected items once 3 are chosen.
-                maxSelection: 3,
-                onSelectionChanged: (List<City> list) =>
-                    setState(() => _multiCities = list),
-              ),
-
-              _section('5. Async load + shimmer skeleton loading'),
-              CustomDropdown<City>.async(
-                loader: _searchCities,
-                value: _asyncCity,
-                itemLabel: (City c) => c.name,
-                searchHint: 'Type to search cities…',
-                hintText: 'Search remotely',
-                loading: const DropdownLoading.shimmer(itemCount: 5),
-                onChanged: (City c) => setState(() => _asyncCity = c),
-              ),
-
-              _section('6. Opens to the RIGHT'),
-              CustomDropdown<City>(
-                items: kCities,
-                value: _sideCity,
-                itemLabel: (City c) => c.name,
-                direction: DropdownDirection.right,
-                menuWidth: 200,
-                leading: const Icon(Icons.place_outlined, size: 18),
-                hintText: 'Side menu',
-                onChanged: (City c) => setState(() => _sideCity = c),
-              ),
-
-              _section('7. Disabled dropdown'),
-              const CustomDropdown<String>(
-                items: <String>['X', 'Y'],
-                enabled: false,
-                hintText: 'Disabled',
-                onChanged: _noop,
-              ),
-
-              _section('8. Inside a Form (validation)'),
-              Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    CustomDropdown<City>(
-                      items: kCities,
-                      value: _formCity,
-                      itemLabel: (City c) => c.name,
-                      hintText: 'Pick a city (required)',
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      validator: (City? c) =>
-                          c == null ? 'Please pick a city' : null,
-                      onChanged: (City c) => setState(() => _formCity = c),
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: () {
-                        final bool ok = _formKey.currentState!.validate();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(ok ? 'Valid!' : 'Fix the errors'),
-                          ),
-                        );
-                      },
-                      child: const Text('Submit'),
-                    ),
-                  ],
-                ),
-              ),
-
-              _section('9. Programmatic control (DropdownController)'),
-              CustomDropdown<City>(
-                controller: _dropdownController,
-                items: kCities,
-                value: _controlledCity,
-                itemLabel: (City c) => c.name,
-                hintText: 'Controlled from the button below',
-                onChanged: (City c) => setState(() => _controlledCity = c),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: _dropdownController.toggle,
-                icon: const Icon(Icons.arrow_drop_down_circle_outlined),
-                label: const Text('Open / close from here'),
-              ),
-            ],
+          constraints: const BoxConstraints(maxWidth: 480),
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: _demos.length,
+            separatorBuilder: (_, _) => const Divider(height: 1),
+            itemBuilder: (BuildContext context, int i) {
+              final _Demo demo = _demos[i];
+              return ListTile(
+                title: Text(demo.title),
+                subtitle: Text(demo.subtitle),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute<void>(builder: demo.builder)),
+              );
+            },
           ),
         ),
       ),
     );
   }
-
-  static void _noop(String _) {}
-
-  Widget _section(String title) => Padding(
-    padding: const EdgeInsets.only(top: 28, bottom: 8),
-    child: Text(
-      title,
-      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-    ),
-  );
 }

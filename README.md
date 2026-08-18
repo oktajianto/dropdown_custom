@@ -58,6 +58,8 @@ import 'package:dropdown_custom/dropdown_custom.dart';
 
 ### Simplest case
 
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/simplest.gif" alt="Simplest dropdown demo" width="360" /></p>
+
 ```dart
 CustomDropdown<String>(
   items: const ['Apple', 'Mango', 'Orange'],
@@ -66,6 +68,8 @@ CustomDropdown<String>(
 ```
 
 ### Clearable (single-select)
+
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/clearable.gif" alt="Clearable dropdown demo" width="360" /></p>
 
 Show a ✕ button on the trigger to reset the selection. Because `onChanged`
 returns a non-null `T`, clearing is reported through a separate `onCleared`
@@ -82,6 +86,8 @@ CustomDropdown<String>(
 ```
 
 ### Inside a Form, with validation
+
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/form-validation.gif" alt="Form validation demo" width="360" /></p>
 
 Pass a `validator` to make the dropdown a `FormField`: it joins the enclosing
 `Form`, so `Form.validate()`/`save()` include it. On a failed validation the
@@ -128,6 +134,8 @@ CustomDropdown<City>.multi(
 
 ### Over your own model, with search and disabled items
 
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/search-disabled.gif" alt="Search and disabled items demo" width="360" /></p>
+
 ```dart
 CustomDropdown<City>(
   items: cities,
@@ -141,6 +149,8 @@ CustomDropdown<City>(
 
 ### Grouped
 
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/grouped.gif" alt="Grouped items demo" width="360" /></p>
+
 ```dart
 CustomDropdown<City>(
   items: cities,
@@ -152,6 +162,8 @@ CustomDropdown<City>(
 ```
 
 ### Multi-select
+
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/multi-select.gif" alt="Multi-select demo" width="360" /></p>
 
 ```dart
 CustomDropdown<City>.multi(
@@ -188,6 +200,8 @@ Limit how many items can be picked with `maxSelection`. Once the limit is
 reached, unselected items are disabled (already-selected ones can still be
 unchecked), and "select all" stops at the limit:
 
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/max-selection.gif" alt="Max selection demo" width="360" /></p>
+
 ```dart
 CustomDropdown<City>.multi(
   items: cities,
@@ -203,6 +217,8 @@ via `selectedItemsLabel`). Set `showChips: true` to show it as **removable
 chips** instead — each chip has a ✕ that removes just that item, without
 opening the menu:
 
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/chips.gif" alt="Multi-select chips demo" width="360" /></p>
+
 ```dart
 CustomDropdown<City>.multi(
   items: cities,
@@ -216,6 +232,8 @@ CustomDropdown<City>.multi(
 ```
 
 ### Async loading
+
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/async.gif" alt="Async loading demo" width="360" /></p>
 
 ```dart
 CustomDropdown<User>.async(
@@ -273,6 +291,8 @@ when a search yields no matches).
 
 ### Positioning
 
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/positioning.gif" alt="Positioning demo" width="360" /></p>
+
 ```dart
 CustomDropdown<City>(
   items: cities,
@@ -283,6 +303,8 @@ CustomDropdown<City>(
 ```
 
 ### Styling (field / menu / search — independently)
+
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/styling.gif" alt="Styling demo" width="360" /></p>
 
 Styling is split into three groups so the input field, the menu box, and the
 search bar can be themed separately:
@@ -327,6 +349,8 @@ CustomDropdown<City>(
 
 ### Programmatic control (DropdownController)
 
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/controller.gif" alt="DropdownController demo" width="360" /></p>
+
 Pass a `DropdownController` to open, close, or toggle the menu from anywhere,
 and to observe its open state (it's a `ChangeNotifier`):
 
@@ -352,6 +376,8 @@ Dispose it when done, like any `ChangeNotifier`. Works on all three
 constructors (default, `.multi`, `.async`).
 
 ## Keyboard & accessibility
+
+<p align="center"><img src="https://raw.githubusercontent.com/oktajianto/dropdown_custom/main/screenshots/keyboard.gif" alt="Keyboard navigation demo" width="360" /></p>
 
 The open menu is fully keyboard-navigable (including while typing in the search
 box):

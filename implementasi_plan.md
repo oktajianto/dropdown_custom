@@ -155,6 +155,16 @@ Diurutkan dari nilai tertinggi.
 - [ ] **Infinite scroll / pagination** untuk `.async` list besar.
 - [ ] **Opsi "tambah baru"** (tags style) — masukkan nilai di luar list.
 
+### Fase 6 — Example gallery per fitur (SELESAI)
+
+- [x] Example app diubah jadi **menu (home) + demo terfokus per fitur**, selain
+      halaman "All features" lama yang tetap dipertahankan. Tiap demo isolasi
+      satu fitur untuk memudahkan rekam GIF. File: `example/lib/main.dart`
+      (menu), `all_features_page.dart` (halaman lama), `demos.dart` (demo per
+      fitur), `city.dart` (model bersama).
+- [x] README diberi placeholder GIF sebelum tiap blok kode (URL
+      `screenshots/<nama>.gif`). Mapping nama ada di `example/README.md`.
+
 ## Keputusan yang Sudah Diambil
 
 - **Nama package:** `dropdown_custom` (tersedia di pub.dev).
