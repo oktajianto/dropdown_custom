@@ -25,13 +25,20 @@ Flutter's built-in dropdown is limited, and most alternatives only open below
 the trigger. `dropdown_custom` focuses on:
 
 - **Single or multiple selection** — pick one value, or enable multi-select to
-  collect a `List<T>` with checkboxes.
+  collect a `List<T>` with checkboxes, removable chips, and an optional
+  `maxSelection` cap.
 - **Free positioning** — open the menu on any side, with `auto` flipping when
   it would run off-screen.
+- **Search, grouping & async** — a built-in search box, group headers, and an
+  async `loader` with debounce plus a shimmer loading state.
+- **Form-ready** — drop it into a `Form` with a `validator`; it shows an error
+  message and turns the outline red, and works with `Form.validate()`/`save()`.
+- **Keyboard & accessible** — arrow/Enter/Esc navigation (even while searching)
+  and `Semantics` on the trigger and every item, out of the box.
 - **Type-safe generics** — items are a plain `List<T>`; no wrapper class
   required. `onChanged` returns your `T`, not `dynamic`.
-- **Simple by default** — the basic case is three lines; every extra feature is
-  an optional parameter.
+- **Simple by default** — the basic case is three lines; every extra feature
+  (clearable, chips, `DropdownController`, styling…) is an optional parameter.
 - **No dependencies** — only the Flutter SDK.
 
 ## Preview
