@@ -419,6 +419,76 @@ void main() {
     });
   });
 
+  group('CustomDropdown maxSelection (multi-select)', () {
+    testWidgets('blocks selecting beyond the limit', (tester) async {
+      List<String>? selection;
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango', 'Orange'],
+            selectedItems: const <String>['Apple'],
+            maxSelection: 1,
+            onSelectionChanged: (List<String> v) => selection = v,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      // At the limit (1 selected), tapping a different item does nothing.
+      await tester.tap(find.text('Mango'));
+      await tester.pumpAndSettle();
+      expect(selection, isNull);
+    });
+
+    testWidgets('still allows unchecking at the limit', (tester) async {
+      List<String>? selection;
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango', 'Orange'],
+            selectedItems: const <String>['Apple'],
+            maxSelection: 1,
+            onSelectionChanged: (List<String> v) => selection = v,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      // The already-selected item can be unchecked even at the limit.
+      // (The trigger also shows "Apple", so target the menu row with .last.)
+      await tester.tap(find.text('Apple').last);
+      await tester.pumpAndSettle();
+      expect(selection, <String>[]);
+    });
+
+    testWidgets('select all stops at the limit', (tester) async {
+      List<String>? selection;
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>.multi(
+            items: const <String>['Apple', 'Mango', 'Orange'],
+            selectedItems: const <String>[],
+            maxSelection: 2,
+            showSelectAll: true,
+            onSelectionChanged: (List<String> v) => selection = v,
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Select all'));
+      await tester.pumpAndSettle();
+
+      expect(selection, hasLength(2));
+    });
+  });
+
   group('CustomDropdown chips (multi-select)', () {
     testWidgets('renders a chip per selected item when showChips is on', (
       tester,

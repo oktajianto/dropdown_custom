@@ -128,7 +128,8 @@ class CustomDropdown<T> extends StatefulWidget {
        validatorMulti = null,
        showChips = false,
        chipOverflow = ChipOverflow.wrap,
-       chipStyle = const DropdownChipStyle();
+       chipStyle = const DropdownChipStyle(),
+       maxSelection = null;
 
   /// Creates a multi-select dropdown that shows a checkbox on each row and
   /// keeps the menu open while the user toggles items.
@@ -149,6 +150,7 @@ class CustomDropdown<T> extends StatefulWidget {
     this.showChips = false,
     this.chipOverflow = ChipOverflow.wrap,
     this.chipStyle = const DropdownChipStyle(),
+    this.maxSelection,
     this.showSelectAll = false,
     this.selectAllLabel = 'Select all',
     this.clearAllLabel = 'Clear',
@@ -165,7 +167,11 @@ class CustomDropdown<T> extends StatefulWidget {
     FormFieldValidator<List<T>>? validator,
     this.autovalidateMode = AutovalidateMode.disabled,
     this.controller,
-  }) : multiSelect = true,
+  }) : assert(
+         maxSelection == null || maxSelection > 0,
+         'maxSelection must be greater than zero.',
+       ),
+       multiSelect = true,
        validatorMulti = validator,
        validator = null,
        errorBuilder = null,
@@ -248,7 +254,8 @@ class CustomDropdown<T> extends StatefulWidget {
        validatorMulti = null,
        showChips = false,
        chipOverflow = ChipOverflow.wrap,
-       chipStyle = const DropdownChipStyle();
+       chipStyle = const DropdownChipStyle(),
+       maxSelection = null;
 
   /// The list of selectable items. Empty for [CustomDropdown.async], where
   /// items come from [loader] instead.
@@ -310,6 +317,11 @@ class CustomDropdown<T> extends StatefulWidget {
   /// Multi-select: styling for the chips (used when [showChips] is true).
   /// Colors default to values derived from [menuStyle] and the theme.
   final DropdownChipStyle chipStyle;
+
+  /// Multi-select: the maximum number of items that can be selected, or `null`
+  /// for no limit. When the limit is reached, unselected items are disabled
+  /// (already-selected items can still be unchecked). Must be greater than zero.
+  final int? maxSelection;
 
   /// Multi-select: whether to show "select all" / "clear" actions above the
   /// list. Defaults to `false`. Both actions operate on the items currently
@@ -515,6 +527,7 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
           searchStyle: widget.searchStyle,
           items: widget.items,
           multiSelect: widget.multiSelect,
+          maxSelection: widget.maxSelection,
           showSelectAll: widget.showSelectAll,
           selectAllLabel: widget.selectAllLabel,
           clearAllLabel: widget.clearAllLabel,

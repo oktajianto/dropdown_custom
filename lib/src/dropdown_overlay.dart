@@ -28,6 +28,7 @@ class DropdownOverlay<T> extends StatefulWidget {
     required this.searchStyle,
     required this.items,
     required this.multiSelect,
+    required this.maxSelection,
     required this.showSelectAll,
     required this.selectAllLabel,
     required this.clearAllLabel,
@@ -80,6 +81,9 @@ class DropdownOverlay<T> extends StatefulWidget {
 
   /// Whether the menu is in multi-select (checkbox) mode.
   final bool multiSelect;
+
+  /// Multi-select: maximum selectable items, or `null` for no limit.
+  final int? maxSelection;
 
   /// Multi-select: whether to show the select-all / clear action row.
   final bool showSelectAll;
@@ -241,8 +245,11 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
       widget.onSelected(item);
       return;
     }
+    final bool alreadySelected = _selected.contains(item);
+    // Block adding a new item once the selection cap is reached.
+    if (!alreadySelected && _atLimit) return;
     setState(() {
-      if (_selected.contains(item)) {
+      if (alreadySelected) {
         _selected.remove(item);
       } else {
         _selected.add(item);
@@ -251,15 +258,27 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
     widget.onSelectionChanged(List<T>.of(_selected));
   }
 
+  /// The item's own enabled state, ignoring the selection cap.
   bool _isEnabled(T item) => widget.isItemEnabled?.call(item) ?? true;
+
+  /// Whether the multi-select cap has been reached.
+  bool get _atLimit =>
+      widget.maxSelection != null && _selected.length >= widget.maxSelection!;
+
+  /// Whether [item] can be interacted with right now: enabled, and either
+  /// already selected (so it can be unchecked) or the cap is not yet reached.
+  bool _isSelectable(T item) =>
+      _isEnabled(item) && (!_atLimit || _selected.contains(item));
 
   /// Items currently visible in the menu (after the search filter).
   Iterable<T> get _visibleItems => widget.items.where(_matches);
 
-  /// Selects every visible, enabled item (union with the existing selection).
+  /// Selects every visible, enabled item (union with the existing selection),
+  /// stopping once [DropdownOverlay.maxSelection] is reached.
   void _selectAllVisible() {
     setState(() {
       for (final T item in _visibleItems) {
+        if (_atLimit) break;
         if (_isEnabled(item) && !_selected.contains(item)) {
           _selected.add(item);
         }
@@ -287,12 +306,13 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
 
   // --- Keyboard navigation ---------------------------------------------------
 
-  /// Indices in [_rows] that can hold the highlight: item rows that are enabled.
+  /// Indices in [_rows] that can hold the highlight: item rows that are
+  /// currently selectable (respecting the selection cap).
   List<int> _navigableIndices() {
     final List<int> out = <int>[];
     for (int i = 0; i < _rows.length; i++) {
       final _Row<T> r = _rows[i];
-      if (!r.isHeader && _isEnabled(r.item as T)) out.add(i);
+      if (!r.isHeader && _isSelectable(r.item as T)) out.add(i);
     }
     return out;
   }
@@ -808,7 +828,8 @@ class _DropdownOverlayState<T> extends State<DropdownOverlay<T>>
 
     final T item = row.item as T;
     final bool isSelected = _isSelected(item);
-    final bool isEnabled = widget.isItemEnabled?.call(item) ?? true;
+    // Respects the selection cap: an unselected item is disabled at the limit.
+    final bool isEnabled = _isSelectable(item);
     final bool isActive = index == _activeIndex;
 
     final Widget content =

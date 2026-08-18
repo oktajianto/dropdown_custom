@@ -23,6 +23,9 @@
 - `DropdownController`: pass a `controller` to open/close/toggle the menu
   programmatically and read `isOpen`. It is a `ChangeNotifier`, so you can
   listen for open/close changes. Available on all three constructors.
+- Multi-select `maxSelection`: cap how many items can be selected. At the
+  limit, unselected items are disabled (selected ones can still be unchecked),
+  and "select all" stops at the cap.
 
 ## 0.4.0
 

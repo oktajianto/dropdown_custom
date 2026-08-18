@@ -184,6 +184,20 @@ CustomDropdown<City>.multi(
 )
 ```
 
+Limit how many items can be picked with `maxSelection`. Once the limit is
+reached, unselected items are disabled (already-selected ones can still be
+unchecked), and "select all" stops at the limit:
+
+```dart
+CustomDropdown<City>.multi(
+  items: cities,
+  selectedItems: picked,
+  itemLabel: (c) => c.name,
+  maxSelection: 3,
+  onSelectionChanged: (list) => setState(() => picked = list),
+)
+```
+
 By default the trigger shows the selection as comma-joined text (customizable
 via `selectedItemsLabel`). Set `showChips: true` to show it as **removable
 chips** instead — each chip has a ✕ that removes just that item, without

@@ -144,8 +144,10 @@ Diurutkan dari nilai tertinggi.
       konstruktor. Implementasi pakai pola `part` agar controller mengakses aksi
       internal state tanpa membocorkan API. Sudah ada test, contoh (section 9),
       README.
-- [ ] **Batas maksimal pilihan (multi-select)** — `maxSelection: n`, nonaktifkan
-      sisanya saat batas tercapai.
+- [x] **Batas maksimal pilihan (multi-select)** (v0.5.0) — `maxSelection: n`;
+      saat batas tercapai item belum-terpilih dinonaktifkan (yang terpilih tetap
+      bisa di-uncheck), select-all & keyboard nav ikut menghormati batas. Sudah
+      ada test, contoh (section 4), README.
 
 **Prioritas rendah (nice-to-have)**
 
