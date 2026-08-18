@@ -58,6 +58,14 @@ class _DemoPageState extends State<DemoPage> {
   List<City> _multiCities = <City>[];
   City? _formCity;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  City? _controlledCity;
+  final DropdownController _dropdownController = DropdownController();
+
+  @override
+  void dispose() {
+    _dropdownController.dispose();
+    super.dispose();
+  }
 
   /// Fake network search: filters [kCities] by [query] after a short delay.
   Future<List<City>> _searchCities(String query) async {
@@ -211,6 +219,22 @@ class _DemoPageState extends State<DemoPage> {
                     ),
                   ],
                 ),
+              ),
+
+              _section('9. Programmatic control (DropdownController)'),
+              CustomDropdown<City>(
+                controller: _dropdownController,
+                items: kCities,
+                value: _controlledCity,
+                itemLabel: (City c) => c.name,
+                hintText: 'Controlled from the button below',
+                onChanged: (City c) => setState(() => _controlledCity = c),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: _dropdownController.toggle,
+                icon: const Icon(Icons.arrow_drop_down_circle_outlined),
+                label: const Text('Open / close from here'),
               ),
             ],
           ),

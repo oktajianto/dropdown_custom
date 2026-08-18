@@ -139,7 +139,11 @@ Diurutkan dari nilai tertinggi.
       pilih wrap (default) / scroll horizontal; `chipStyle` (`DropdownChipStyle`)
       untuk warna (default turun dari `menuStyle`/tema). `selectedItemsLabel`
       tetap dipakai saat `showChips: false`. Sudah ada test, contoh, README.
-- [ ] **DropdownController** — `open()`/`close()`/`select()`/`isOpen` programatik.
+- [x] **DropdownController** (v0.5.0) — `open()`/`close()`/`toggle()` + `isOpen`
+      programatik; `ChangeNotifier` (bisa di-listen). Tersedia di ketiga
+      konstruktor. Implementasi pakai pola `part` agar controller mengakses aksi
+      internal state tanpa membocorkan API. Sudah ada test, contoh (section 9),
+      README.
 - [ ] **Batas maksimal pilihan (multi-select)** — `maxSelection: n`, nonaktifkan
       sisanya saat batas tercapai.
 

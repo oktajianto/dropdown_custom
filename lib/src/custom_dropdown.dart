@@ -9,6 +9,8 @@ import 'dropdown_menu_style.dart';
 import 'dropdown_overlay.dart';
 import 'dropdown_search_style.dart';
 
+part 'dropdown_controller.dart';
+
 /// Signature for turning an item of type [T] into its display label.
 typedef ItemLabel<T> = String Function(T item);
 
@@ -103,6 +105,7 @@ class CustomDropdown<T> extends StatefulWidget {
     this.onCleared,
     this.validator,
     this.autovalidateMode = AutovalidateMode.disabled,
+    this.controller,
   }) : assert(
          !clearable || onCleared != null,
          'When clearable is true, provide onCleared to reset your value '
@@ -161,6 +164,7 @@ class CustomDropdown<T> extends StatefulWidget {
     this.leading,
     FormFieldValidator<List<T>>? validator,
     this.autovalidateMode = AutovalidateMode.disabled,
+    this.controller,
   }) : multiSelect = true,
        validatorMulti = validator,
        validator = null,
@@ -225,6 +229,7 @@ class CustomDropdown<T> extends StatefulWidget {
     this.onCleared,
     this.validator,
     this.autovalidateMode = AutovalidateMode.disabled,
+    this.controller,
   }) : assert(
          !clearable || onCleared != null,
          'When clearable is true, provide onCleared to reset your value '
@@ -414,6 +419,10 @@ class CustomDropdown<T> extends StatefulWidget {
   /// [AutovalidateMode.disabled] (validate only on [Form.validate]).
   final AutovalidateMode autovalidateMode;
 
+  /// Optional controller to open/close/toggle the menu programmatically and
+  /// observe its open state. See [DropdownController].
+  final DropdownController? controller;
+
   @override
   State<CustomDropdown<T>> createState() => _CustomDropdownState<T>();
 }
@@ -450,7 +459,24 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    widget.controller?._attach(open: _open, close: _close);
+  }
+
+  @override
+  void didUpdateWidget(CustomDropdown<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.controller != oldWidget.controller) {
+      oldWidget.controller?._detach();
+      widget.controller?._attach(open: _open, close: _close);
+      widget.controller?._setIsOpen(_isOpen);
+    }
+  }
+
+  @override
   void dispose() {
+    widget.controller?._detach();
     _removeOverlay();
     super.dispose();
   }
@@ -522,11 +548,13 @@ class _CustomDropdownState<T> extends State<CustomDropdown<T>> {
 
     Overlay.of(context).insert(_entry!);
     setState(() => _isOpen = true);
+    widget.controller?._setIsOpen(true);
   }
 
   void _close() {
     _removeOverlay();
     if (mounted) setState(() => _isOpen = false);
+    widget.controller?._setIsOpen(false);
   }
 
   void _removeOverlay() {

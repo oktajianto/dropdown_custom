@@ -311,6 +311,32 @@ CustomDropdown<City>(
 )
 ```
 
+### Programmatic control (DropdownController)
+
+Pass a `DropdownController` to open, close, or toggle the menu from anywhere,
+and to observe its open state (it's a `ChangeNotifier`):
+
+```dart
+final controller = DropdownController();
+
+CustomDropdown<City>(
+  controller: controller,
+  items: cities,
+  itemLabel: (c) => c.name,
+  onChanged: (c) => ...,
+)
+
+// From another widget / callback:
+controller.open();
+controller.close();
+controller.toggle();
+print(controller.isOpen);
+controller.addListener(() => print('open: ${controller.isOpen}'));
+```
+
+Dispose it when done, like any `ChangeNotifier`. Works on all three
+constructors (default, `.multi`, `.async`).
+
 ## Keyboard & accessibility
 
 The open menu is fully keyboard-navigable (including while typing in the search

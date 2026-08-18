@@ -815,6 +815,85 @@ void main() {
     });
   });
 
+  group('CustomDropdown controller', () {
+    testWidgets('open() and close() control the menu programmatically', (
+      tester,
+    ) async {
+      final DropdownController controller = DropdownController();
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            controller: controller,
+            items: const <String>['Apple', 'Mango'],
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      expect(find.text('Mango'), findsNothing);
+
+      controller.open();
+      await tester.pumpAndSettle();
+      expect(find.text('Mango'), findsOneWidget);
+      expect(controller.isOpen, isTrue);
+
+      controller.close();
+      await tester.pumpAndSettle();
+      expect(find.text('Mango'), findsNothing);
+      expect(controller.isOpen, isFalse);
+    });
+
+    testWidgets('notifies listeners and tracks isOpen on user taps', (
+      tester,
+    ) async {
+      final DropdownController controller = DropdownController();
+      addTearDown(controller.dispose);
+      int notifications = 0;
+      controller.addListener(() => notifications++);
+
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            controller: controller,
+            items: const <String>['Apple', 'Mango'],
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      // Opening via a tap should update isOpen and fire a notification.
+      await tester.tap(find.byType(CustomDropdown<String>));
+      await tester.pumpAndSettle();
+      expect(controller.isOpen, isTrue);
+      expect(notifications, greaterThan(0));
+    });
+
+    testWidgets('toggle() opens then closes', (tester) async {
+      final DropdownController controller = DropdownController();
+      addTearDown(controller.dispose);
+
+      await tester.pumpWidget(
+        _wrap(
+          CustomDropdown<String>(
+            controller: controller,
+            items: const <String>['Apple', 'Mango'],
+            onChanged: (_) {},
+          ),
+        ),
+      );
+
+      controller.toggle();
+      await tester.pumpAndSettle();
+      expect(controller.isOpen, isTrue);
+
+      controller.toggle();
+      await tester.pumpAndSettle();
+      expect(controller.isOpen, isFalse);
+    });
+  });
+
   group('CustomDropdown keyboard navigation', () {
     testWidgets('arrow down + Enter selects an item', (tester) async {
       String? picked;

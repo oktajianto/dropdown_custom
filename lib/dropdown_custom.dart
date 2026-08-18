@@ -8,6 +8,7 @@ library;
 export 'src/custom_dropdown.dart'
     show
         CustomDropdown,
+        DropdownController,
         ItemLabel,
         ItemGroup,
         ItemEnabled,

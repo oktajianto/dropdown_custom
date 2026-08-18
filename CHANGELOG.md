@@ -20,6 +20,9 @@
   (default) or horizontal scroll; `chipStyle` (`DropdownChipStyle`) themes the
   chips, defaulting to colors derived from `menuStyle`/theme. `selectedItemsLabel`
   still applies when `showChips` is false.
+- `DropdownController`: pass a `controller` to open/close/toggle the menu
+  programmatically and read `isOpen`. It is a `ChangeNotifier`, so you can
+  listen for open/close changes. Available on all three constructors.
 
 ## 0.4.0
 
