@@ -1,3 +1,10 @@
+## 0.5.1
+
+- Add a package screenshot so pub.dev shows a thumbnail on the search card and
+  package page (declared via `screenshots:` in `pubspec.yaml`).
+- Docs: the example's `main.dart` now opens with a comment pointing readers to
+  the README on pub.dev for the full, copy-paste examples of every feature.
+
 ## 0.5.0
 
 - Add a clearable single-select: set `clearable: true` to show a ✕ button on

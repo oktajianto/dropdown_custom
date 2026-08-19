@@ -1,3 +1,8 @@
+// Looking for the full, copy-paste examples for every feature? See the README
+// on the package page: https://pub.dev/packages/dropdown_custom
+//
+// This app is a runnable gallery: a home menu that opens one focused demo per
+// feature (see demos.dart), plus an "All features" page that stacks them all.
 import 'package:flutter/material.dart';
 
 import 'all_features_page.dart';

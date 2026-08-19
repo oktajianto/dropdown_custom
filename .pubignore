@@ -1,8 +1,13 @@
 # Keep the published archive lean.
 
 # The README references screenshots via absolute raw.githubusercontent.com URLs,
-# so they render on pub.dev without shipping the (large) image files.
-screenshots/
+# so they render on pub.dev without shipping the (large) image files. The one
+# exception is simplest.gif, kept in the archive and declared in pubspec's
+# `screenshots:` so pub.dev shows a thumbnail on the search card / package page.
+# (Match contents with `screenshots/*`, not `screenshots/`, so the re-include
+# below works — git can't re-include a file whose parent dir is fully excluded.)
+screenshots/*
+!screenshots/simplest.gif
 implementasi_plan.md
 
 # Build artifacts and tool caches (a .pubignore takes precedence over .gitignore,
